@@ -59,7 +59,7 @@ body{
 
 /* ── Screen toggling ── */
 .screen{display:none}
-body[data-screen="setup"] #screen-setup{display:block}
+body[data-screen="setup"] #screen-setup{display:flex}
 body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:column;min-height:100vh}
 
 /* ════════════════════════════
@@ -99,6 +99,7 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
 .setup-panel{
   width:100%;
   max-width:660px;
+  margin:0 auto;
 }
 .section-label{
   font-family:'Barlow Condensed',sans-serif;
