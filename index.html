@@ -1787,10 +1787,10 @@ function getSnapshots(){
   try{return JSON.parse(localStorage.getItem(SNAPSHOTS_KEY))||[];}
   catch{return[];}
 }
-function putSnapshots(snaps){localStorage.setItem(SNAPSHOTS_KEY,JSON.stringify(snaps));}
+function putSnapshots(snaps){try{localStorage.setItem(SNAPSHOTS_KEY,JSON.stringify(snaps));}catch(_){}}
 
 function saveState(triggerGameId){
-  localStorage.setItem(LIVE_KEY,JSON.stringify(STATE));
+  try{localStorage.setItem(LIVE_KEY,JSON.stringify(STATE));}catch(_){}
   // Build snapshot key
   const gamesPlayed=STATE.games.filter(g=>g.confirmed).length;
   const now=Date.now();
@@ -2162,7 +2162,7 @@ document.getElementById('history-list').addEventListener('click',e=>{
         return;
       }
     }
-  }catch(e){localStorage.removeItem(LIVE_KEY);}
+  }catch(e){try{localStorage.removeItem(LIVE_KEY);}catch(_){}}
   // Fresh start
   STATE.players=[
     {id:uid(),name:'',countryCode:'',countryName:''},
