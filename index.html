@@ -923,12 +923,14 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   }
   .team-a{justify-content:flex-start}
   .score-ctrl{flex-direction:row;flex-wrap:wrap;justify-content:center}
-  .player-card{grid-template-columns:28px 36px 1fr 36px}
-  .flag-preview{width:36px;height:24px}
-  .nat-name-label{display:none}
+  .player-card{grid-template-columns:24px 1fr 1.5fr 28px}
+  .flag-preview{display:none}
+  .nat-flag-sm{width:30px;height:20px}
+  .nat-name-label{font-size:.75rem;max-width:100px}
 }
 @media(max-width:480px){
-  .player-card{grid-template-columns:24px 32px 1fr 32px;gap:8px}
+  .player-card{grid-template-columns:20px 1fr 1.4fr 24px;gap:6px}
+  .nat-name-label{max-width:75px}
 }
 </style>
 </head>
@@ -1037,6 +1039,10 @@ const SNAPSHOTS_KEY = 'fc2026_snapshots';
 /* ════════════════════════════════════════
    COUNTRIES DATA
 ════════════════════════════════════════ */
+const PINNED_NATIONS = [
+  {name:'Austria',code:'at'},{name:'Greece',code:'gr'},{name:'India',code:'in'},
+  {name:'Turkey',code:'tr'},{name:'Colombia',code:'co'},
+];
 const TOP_NATIONS = [
   {name:'Argentina',code:'ar'},{name:'Brazil',code:'br'},{name:'England',code:'gb-eng'},
   {name:'France',code:'fr'},{name:'Germany',code:'de'},{name:'Italy',code:'it'},
@@ -1911,11 +1917,13 @@ function buildNatList(ul){
     }
     ul.appendChild(li);
   };
+  addLi('Your Group',true);
+  PINNED_NATIONS.forEach(c=>addLi(c));
   addLi('Popular Nations',true);
-  TOP_NATIONS.forEach(c=>addLi(c));
+  TOP_NATIONS.forEach(c=>{if(!PINNED_NATIONS.find(p=>p.code===c.code))addLi(c);});
   addLi('All Nations',true);
   ALL_NATIONS.forEach(c=>{
-    if(!TOP_NATIONS.find(t=>t.code===c.code))addLi(c);
+    if(!TOP_NATIONS.find(t=>t.code===c.code)&&!PINNED_NATIONS.find(p=>p.code===c.code))addLi(c);
   });
 }
 
