@@ -6,7 +6,7 @@
 <title>FC 2026 Tournament – The Revenge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,800;1,900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,800;1,900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
 /* ── Reset ── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -606,6 +606,72 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   font-size:1.1rem;
   color:var(--green-bright);
 }
+
+/* Leader panel */
+#leader-panel{margin-bottom:12px}
+.leader-card{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:13px 16px;
+  background:linear-gradient(90deg,rgba(0,230,118,.1) 0%,transparent 65%);
+  border-bottom:1px solid rgba(255,255,255,.04);
+  border-radius:8px 8px 0 0;
+}
+.leader-rank{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:900;
+  font-style:italic;
+  font-size:22px;
+  color:var(--green-bright);
+  line-height:1;
+  width:18px;
+  flex-shrink:0;
+}
+.leader-flag{
+  width:26px;height:18px;
+  border-radius:2px;
+  object-fit:cover;
+  flex-shrink:0;
+}
+.leader-name{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700;
+  font-size:1.05rem;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--text-primary);
+  flex:1;
+}
+.leader-meta{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:3px;
+}
+.leader-record{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--text-muted);
+  line-height:1;
+}
+.leader-gd{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--text-muted);
+  line-height:1;
+}
+.leader-gd.pos{color:var(--green-bright)}
+.leader-gd.neg{color:var(--loss)}
+.leader-pts{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:900;
+  font-style:italic;
+  font-size:22px;
+  color:var(--green-bright);
+  line-height:1;
+  flex-shrink:0;
+}
 .gd-pos{color:var(--win)}
 .gd-neg{color:var(--loss)}
 
@@ -984,6 +1050,7 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   </div>
 
   <div id="tab-table" class="tab-panel">
+    <div id="leader-panel"></div>
     <div style="overflow-x:auto">
       <table class="standings-table">
         <thead>
@@ -1325,6 +1392,24 @@ function computeStats(){
 ════════════════════════════════════════ */
 function renderStandings(){
   const rows=computeStandings();
+  // Leader panel
+  const lp=document.getElementById('leader-panel');
+  if(lp&&rows.length>0){
+    const r=rows[0],p=playerById(r.id);
+    const gd=r.gf-r.ga;
+    const gdStr=gd>0?'+'+gd:String(gd);
+    const gdCls='leader-gd'+(gd>0?' pos':gd<0?' neg':'');
+    lp.innerHTML=`<div class="leader-card">
+      <span class="leader-rank">1</span>
+      <img class="leader-flag" src="${flagSrc(p.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
+      <span class="leader-name">${p.name}</span>
+      <div class="leader-meta">
+        <span class="leader-record">${r.w}–${r.d}–${r.l}</span>
+        <span class="${gdCls}">${gdStr}</span>
+      </div>
+      <span class="leader-pts">${r.pts}</span>
+    </div>`;
+  }
   const tbody=document.getElementById('standings-tbody');
   tbody.innerHTML='';
   rows.forEach((r,i)=>{
