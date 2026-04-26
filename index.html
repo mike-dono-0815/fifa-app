@@ -1093,7 +1093,8 @@ let currentSaveKey = null;
 /* ════════════════════════════════════════
    HELPERS
 ════════════════════════════════════════ */
-function flagSrc(code){return code?`w320/${code.toLowerCase()}.png`:'';}
+const BLANK_IMG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQAABjE+ibYAAAAASUVORK5CYII=';
+function flagSrc(code){return code?`w320/${code.toLowerCase()}.png`:BLANK_IMG;}
 function playerById(id){return STATE.players.find(p=>p.id===id)||{};}
 function playerName(id){return playerById(id).name||'?';}
 function pairKey(a,b){return [a,b].sort().join('|');}
