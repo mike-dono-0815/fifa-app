@@ -416,22 +416,20 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   box-shadow:inset -4px 0 12px var(--purple-glow);
 }
 
-.team{display:flex;flex-direction:column;gap:6px}
-.team-a{align-items:flex-end;text-align:right}
-.team-b{align-items:flex-start;text-align:left}
-.player-pair-row{display:flex;align-items:center;gap:6px}
-.team-a .player-pair-row{flex-direction:row-reverse}
-.pair-flag{width:20px;height:14px;border-radius:2px;object-fit:cover;flex-shrink:0}
+.team{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.team-a{justify-content:flex-end}
+.team-b{justify-content:flex-start}
+.player-inline{display:flex;align-items:center;gap:5px}
+.pair-dash{color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9em}
+.pair-sep{color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.4rem;margin:0 2px;line-height:1}
+.pair-flag{height:26px;width:38px;border-radius:2px;object-fit:cover;flex-shrink:0}
 .pair-name{
   font-family:'Barlow Condensed',sans-serif;
   font-weight:700;
-  font-size:1rem;
+  font-size:1.5rem;
   text-transform:uppercase;
   letter-spacing:.03em;
   white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  max-width:120px;
 }
 
 /* Score control */
@@ -915,8 +913,7 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
     grid-template-columns:1fr;
     gap:10px;
   }
-  .team-a{align-items:flex-start;text-align:left}
-  .team-a .player-pair-row{flex-direction:row}
+  .team-a{justify-content:flex-start}
   .score-ctrl{flex-direction:row;flex-wrap:wrap;justify-content:center}
   .player-card{grid-template-columns:28px 36px 1fr 36px}
   .flag-preview{width:36px;height:24px}
@@ -1611,11 +1608,8 @@ function renderStats(){
 function playerPairHTML(ids,side){
   return ids.map(id=>{
     const p=playerById(id);
-    return`<div class="player-pair-row">
-      <img class="pair-flag" src="${flagSrc(p.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
-      <span class="pair-name">${p.name}</span>
-    </div>`;
-  }).join('');
+    return`<span class="player-inline"><span class="pair-name">${p.name}</span><span class="pair-dash">–</span><img class="pair-flag" src="${flagSrc(p.countryCode)}" alt="" onerror="this.style.opacity='0'"/></span>`;
+  }).join('<span class="pair-sep">/</span>');
 }
 
 function createGameRow(game){
