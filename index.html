@@ -672,6 +672,63 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   line-height:1;
   flex-shrink:0;
 }
+/* Podium */
+.podium-wrap{margin-bottom:16px;padding:4px 0 0}
+.podium-stage{
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  gap:3px;
+}
+.podium-slot{
+  display:flex;flex-direction:column;align-items:center;
+  flex:1;max-width:160px;
+}
+.podium-player{
+  display:flex;flex-direction:column;align-items:center;
+  gap:5px;padding-bottom:10px;width:100%;
+}
+.trophy-img{
+  width:68px;height:auto;display:block;margin:0 auto 2px;
+  filter:brightness(2) sepia(.35) saturate(3) hue-rotate(-10deg)
+         drop-shadow(0 0 18px rgba(255,215,0,.55));
+}
+.podium-flag{width:32px;height:22px;border-radius:3px;object-fit:cover}
+.podium-name{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:800;font-size:1.1rem;
+  text-transform:uppercase;letter-spacing:.04em;
+  line-height:1;text-align:center;
+}
+.gold-name{color:var(--gold)}
+.silver-name{color:var(--silver)}
+.bronze-name{color:var(--bronze)}
+.podium-pts{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.68rem;color:var(--text-muted);line-height:1;
+}
+.podium-block{
+  width:100%;display:flex;align-items:center;justify-content:center;
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:900;font-style:italic;line-height:1;
+  border-radius:4px 4px 0 0;
+}
+.gold-block{
+  height:80px;font-size:2.4rem;color:var(--gold);
+  background:linear-gradient(180deg,#1e1600,#0e0a00);
+  border-top:2px solid var(--gold-dim);
+  box-shadow:0 -6px 24px rgba(255,215,0,.2);
+}
+.silver-block{
+  height:56px;font-size:2rem;color:var(--silver);
+  background:linear-gradient(180deg,#181820,#0d0d14);
+  border-top:2px solid #777;
+}
+.bronze-block{
+  height:40px;font-size:1.8rem;color:var(--bronze);
+  background:linear-gradient(180deg,#1a1008,#0e0804);
+  border-top:2px solid #8b5e3c;
+}
 .gd-pos{color:var(--win)}
 .gd-neg{color:var(--loss)}
 
@@ -1392,23 +1449,57 @@ function computeStats(){
 ════════════════════════════════════════ */
 function renderStandings(){
   const rows=computeStandings();
-  // Leader panel
+  // Leader panel / Podium
   const lp=document.getElementById('leader-panel');
   if(lp&&rows.length>0){
-    const r=rows[0],p=playerById(r.id);
-    const gd=r.gf-r.ga;
-    const gdStr=gd>0?'+'+gd:String(gd);
-    const gdCls='leader-gd'+(gd>0?' pos':gd<0?' neg':'');
-    lp.innerHTML=`<div class="leader-card">
-      <span class="leader-rank">1</span>
-      <img class="leader-flag" src="${flagSrc(p.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
-      <span class="leader-name">${p.name}</span>
-      <div class="leader-meta">
-        <span class="leader-record">${r.w}–${r.d}–${r.l}</span>
-        <span class="${gdCls}">${gdStr}</span>
-      </div>
-      <span class="leader-pts">${r.pts}</span>
-    </div>`;
+    const roundGames=STATE.games.filter(g=>g.round===STATE.currentRound);
+    const roundDone=roundGames.length>0&&roundGames.every(g=>g.confirmed);
+    if(roundDone&&rows.length>=3){
+      const [r1,r2,r3]=[rows[0],rows[1],rows[2]];
+      const [p1,p2,p3]=[r1,r2,r3].map(r=>playerById(r.id));
+      lp.innerHTML=`<div class="podium-wrap"><div class="podium-stage">
+        <div class="podium-slot">
+          <div class="podium-player">
+            <img class="podium-flag" src="${flagSrc(p2.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
+            <span class="podium-name silver-name">${p2.name}</span>
+            <span class="podium-pts">${r2.pts} pts</span>
+          </div>
+          <div class="podium-block silver-block">2</div>
+        </div>
+        <div class="podium-slot">
+          <div class="podium-player">
+            <img class="trophy-img" src="trophy_fa.png" alt=""/>
+            <img class="podium-flag" src="${flagSrc(p1.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
+            <span class="podium-name gold-name">${p1.name}</span>
+            <span class="podium-pts">${r1.pts} pts</span>
+          </div>
+          <div class="podium-block gold-block">1</div>
+        </div>
+        <div class="podium-slot">
+          <div class="podium-player">
+            <img class="podium-flag" src="${flagSrc(p3.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
+            <span class="podium-name bronze-name">${p3.name}</span>
+            <span class="podium-pts">${r3.pts} pts</span>
+          </div>
+          <div class="podium-block bronze-block">3</div>
+        </div>
+      </div></div>`;
+    } else {
+      const r=rows[0],p=playerById(r.id);
+      const gd=r.gf-r.ga;
+      const gdStr=gd>0?'+'+gd:String(gd);
+      const gdCls='leader-gd'+(gd>0?' pos':gd<0?' neg':'');
+      lp.innerHTML=`<div class="leader-card">
+        <span class="leader-rank">1</span>
+        <img class="leader-flag" src="${flagSrc(p.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
+        <span class="leader-name">${p.name}</span>
+        <div class="leader-meta">
+          <span class="leader-record">${r.w}–${r.d}–${r.l}</span>
+          <span class="${gdCls}">${gdStr}</span>
+        </div>
+        <span class="leader-pts">${r.pts}</span>
+      </div>`;
+    }
   }
   const tbody=document.getElementById('standings-tbody');
   tbody.innerHTML='';
