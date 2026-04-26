@@ -440,6 +440,14 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   gap:4px;
   min-width:100px;
 }
+.game-num-label{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:.7rem;
+  font-weight:600;
+  color:var(--text-muted);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
 .ot-badge{
   font-family:'Barlow Condensed',sans-serif;
   font-weight:700;
@@ -1612,7 +1620,7 @@ function playerPairHTML(ids,side){
   }).join('<span class="pair-sep">/</span>');
 }
 
-function createGameRow(game){
+function createGameRow(game,gameNum,totalGames){
   const div=document.createElement('div');
   div.className='game-row'+(game.confirmed?' confirmed':'')+(game.overtime?' ot-game':'');
   div.dataset.gameId=game.id;
@@ -1620,6 +1628,7 @@ function createGameRow(game){
   div.innerHTML=`
     <div class="team team-a">${playerPairHTML(game.teamA,'a')}</div>
     <div class="score-ctrl">
+      <span class="game-num-label">Game ${gameNum} of ${totalGames}</span>
       <span class="ot-badge${game.overtime?' active':''}" data-game="${game.id}" data-action="ot">OT</span>
       <div class="score-row">
         <button class="s-btn" data-game="${game.id}" data-side="a" data-delta="-1" ${game.scoreA===0?'disabled':''}>−</button>
@@ -1691,7 +1700,7 @@ function buildRoundBlock(round){
     ${isComplete?'<span class="round-complete-badge">✓ Complete</span>':''}
   </div>`;
   const frag=document.createDocumentFragment();
-  games.forEach(g=>frag.appendChild(createGameRow(g)));
+  games.forEach((g,i)=>frag.appendChild(createGameRow(g,i+1,games.length)));
   block.appendChild(frag);
   return block;
 }
