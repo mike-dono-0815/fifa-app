@@ -328,6 +328,14 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   transition:border-color .2s,color .2s;
 }
 .btn-new-tournament:hover{border-color:var(--loss);color:var(--loss)}
+.btn-pdf{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;
+  letter-spacing:.06em;text-transform:uppercase;
+  padding:6px 14px;border-radius:var(--r-sm);
+  background:var(--bg-raised);border:1px solid var(--blue-neon);
+  color:var(--blue-neon);transition:background .2s;
+}
+.btn-pdf:hover{background:var(--blue-glow)}
 
 /* Tab bar */
 .tab-bar{display:flex;gap:4px}
@@ -1053,6 +1061,73 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   .player-card{grid-template-columns:20px 1fr 1.4fr 24px;gap:6px}
   .nat-name-label{max-width:75px}
 }
+
+/* ── Print / PDF ── */
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  @page{margin:.5in;size:A4}
+
+  /* Show only the tournament screen content */
+  #screen-setup{display:none!important}
+  #screen-tournament{display:block!important}
+
+  /* Show all three tab panels stacked */
+  .tab-panel{display:block!important;padding:0!important}
+
+  /* Section titles injected via ::before */
+  #tab-schedule::before{content:'Schedule';display:block;
+    font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;
+    text-transform:uppercase;letter-spacing:.08em;color:var(--blue-neon);
+    border-bottom:1px solid var(--border-subtle);padding-bottom:6px;margin-bottom:14px}
+  #tab-table::before{content:'Standings';display:block;
+    font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;
+    text-transform:uppercase;letter-spacing:.08em;color:var(--blue-neon);
+    border-bottom:1px solid var(--border-subtle);padding-bottom:6px;margin-bottom:14px}
+  #tab-stats::before{content:'Statistics';display:block;
+    font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;
+    text-transform:uppercase;letter-spacing:.08em;color:var(--blue-neon);
+    border-bottom:1px solid var(--border-subtle);padding-bottom:6px;margin-bottom:14px}
+
+  /* Page breaks between sections */
+  #tab-table{break-before:page}
+  #tab-stats{break-before:page}
+
+  /* Hide all interactive & nav chrome */
+  .tourney-header,.tab-bar,.s-btn,.confirm-zero-btn,#next-round-wrap,
+  .btn-history,.btn-new-tournament,.btn-pdf,.btn-load-save,.btn-del-save,
+  .history-panel,.history-overlay,.status-dot,.nat-dropdown,
+  .btn-remove,.setup-actions,.game-num-label{display:none!important}
+
+  /* Keep the OT badge visible but non-clickable looking */
+  .ot-badge{pointer-events:none}
+
+  /* Game rows: tighten up */
+  .game-row{padding:8px 10px;margin-bottom:4px;break-inside:avoid}
+  .round-block{break-inside:avoid;margin-bottom:16px}
+  .round-heading{margin-bottom:8px}
+
+  /* Scores: hide +/- buttons, keep values */
+  .score-ctrl{gap:2px}
+  .score-row{gap:4px}
+
+  /* Keep pair names readable */
+  .pair-name{font-size:1.1rem}
+  .pair-flag{height:20px;width:29px}
+
+  /* Table */
+  .standings-table thead th{position:static;backdrop-filter:none;background:var(--bg-surface)}
+  .standings-table td,.standings-table th{padding:7px 10px}
+
+  /* Stats: avoid orphaned cards */
+  .stat-section{break-inside:avoid}
+  .award-card,.stat-card,.leaderboard-item{break-inside:avoid}
+
+  /* Podium */
+  .podium-wrap{break-inside:avoid}
+
+  /* Matrix tables can overflow pages */
+  .matrix-wrap{break-inside:auto}
+}
 </style>
 </head>
 <body data-screen="setup">
@@ -1087,6 +1162,7 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
         <button class="btn-history" id="btn-history">
           &#9202; Saves <span class="save-badge" id="save-badge">0</span>
         </button>
+        <button class="btn-pdf" id="btn-pdf">&#128196; PDF</button>
         <button class="btn-new-tournament" id="btn-new-tournament">New Tournament</button>
       </div>
     </div>
@@ -2301,6 +2377,9 @@ document.getElementById('btn-next-round').addEventListener('click',()=>{
   checkRoundComplete();
   saveState();
 });
+
+// PDF export
+document.getElementById('btn-pdf').addEventListener('click',()=>window.print());
 
 // New tournament
 document.getElementById('btn-new-tournament').addEventListener('click',()=>{
