@@ -612,65 +612,63 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
 .leader-card{
   display:flex;
   align-items:center;
-  gap:12px;
-  padding:13px 16px;
-  background:linear-gradient(90deg,rgba(0,230,118,.1) 0%,transparent 65%);
-  border-bottom:1px solid rgba(255,255,255,.04);
-  border-radius:8px 8px 0 0;
+  gap:18px;
+  padding:14px 20px;
+  background:var(--bg-surface);
+  border:1px solid var(--border-subtle);
+  border-radius:10px;
 }
-.leader-rank{
+.leader-flag-circle{
+  width:58px;height:58px;
+  border-radius:50%;
+  border:2.5px solid var(--green-bright);
+  box-shadow:0 0 10px rgba(0,230,118,.35);
+  overflow:hidden;
+  flex-shrink:0;
+  position:relative;
+}
+.leader-flag-circle img{width:100%;height:100%;object-fit:cover;display:block}
+.leader-flag-circle::after{
+  content:'';
+  position:absolute;top:0;left:50%;transform:translate(-50%,-50%);
+  width:9px;height:9px;border-radius:50%;
+  background:var(--green-bright);
+  box-shadow:0 0 6px var(--green-bright);
+}
+.leader-info{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0}
+.leader-label{
   font-family:'Barlow Condensed',sans-serif;
-  font-weight:900;
-  font-style:italic;
-  font-size:22px;
-  color:var(--green-bright);
-  line-height:1;
-  width:18px;
-  flex-shrink:0;
-}
-.leader-flag{
-  width:26px;height:18px;
-  border-radius:2px;
-  object-fit:cover;
-  flex-shrink:0;
+  font-weight:700;font-size:.68rem;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--green-bright);line-height:1;
 }
 .leader-name{
   font-family:'Barlow Condensed',sans-serif;
-  font-weight:700;
-  font-size:1.05rem;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  color:var(--text-primary);
-  flex:1;
+  font-weight:900;font-style:italic;
+  font-size:2.3rem;text-transform:uppercase;
+  letter-spacing:.02em;color:var(--text-primary);
+  line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.leader-meta{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  gap:3px;
-}
-.leader-record{
+.leader-stats-line{
   font-family:'JetBrains Mono',monospace;
-  font-size:11px;
-  color:var(--text-muted);
-  line-height:1;
+  font-size:.7rem;color:var(--text-muted);
+  margin-top:3px;white-space:nowrap;
 }
-.leader-gd{
-  font-family:'JetBrains Mono',monospace;
-  font-size:11px;
-  color:var(--text-muted);
-  line-height:1;
+.leader-pts-block{
+  display:flex;flex-direction:column;align-items:center;
+  flex-shrink:0;gap:0;
 }
-.leader-gd.pos{color:var(--green-bright)}
-.leader-gd.neg{color:var(--loss)}
 .leader-pts{
   font-family:'Barlow Condensed',sans-serif;
-  font-weight:900;
-  font-style:italic;
-  font-size:22px;
-  color:var(--green-bright);
+  font-weight:900;font-style:italic;
+  font-size:3.6rem;color:var(--green-bright);
   line-height:1;
-  flex-shrink:0;
+}
+.leader-pts-label{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700;font-size:.65rem;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--text-muted);line-height:1;
 }
 /* Podium */
 .podium-wrap{margin-bottom:16px;padding:4px 0 0}
@@ -1488,16 +1486,26 @@ function renderStandings(){
       const r=rows[0],p=playerById(r.id);
       const gd=r.gf-r.ga;
       const gdStr=gd>0?'+'+gd:String(gd);
-      const gdCls='leader-gd'+(gd>0?' pos':gd<0?' neg':'');
+      // Unbeaten streak
+      const pg=STATE.games.filter(g=>g.confirmed&&(g.teamA.includes(r.id)||g.teamB.includes(r.id)));
+      let streak=0;
+      for(let i=pg.length-1;i>=0;i--){
+        const g=pg[i],inA=g.teamA.includes(r.id);
+        if((inA?g.scoreA:g.scoreB)<(inA?g.scoreB:g.scoreA))break;
+        streak++;
+      }
+      const streakStr=streak>1?` · ${streak}-game unbeaten`:'';
       lp.innerHTML=`<div class="leader-card">
-        <span class="leader-rank">1</span>
-        <img class="leader-flag" src="${flagSrc(p.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
-        <span class="leader-name">${p.name}</span>
-        <div class="leader-meta">
-          <span class="leader-record">${r.w}–${r.d}–${r.l}</span>
-          <span class="${gdCls}">${gdStr}</span>
+        <div class="leader-flag-circle"><img src="${flagSrc(p.countryCode)}" alt="" onerror="this.style.opacity='0'"/></div>
+        <div class="leader-info">
+          <span class="leader-label">Current Leader</span>
+          <span class="leader-name">${p.name}</span>
+          <span class="leader-stats-line">${r.w}W · ${r.d}D · ${r.l}L · ${gdStr} GD${streakStr}</span>
         </div>
-        <span class="leader-pts">${r.pts}</span>
+        <div class="leader-pts-block">
+          <span class="leader-pts">${r.pts}</span>
+          <span class="leader-pts-label">Points</span>
+        </div>
       </div>`;
     }
   }
