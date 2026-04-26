@@ -1088,9 +1088,11 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
     text-transform:uppercase;letter-spacing:.08em;color:var(--blue-neon);
     border-bottom:1px solid var(--border-subtle);padding-bottom:6px;margin-bottom:14px}
 
-  /* Page breaks between sections */
-  #tab-table{break-before:page}
-  #tab-stats{break-before:page}
+  /* Reorder sections: Table → Schedule → Stats */
+  #screen-tournament{display:flex;flex-direction:column}
+  #tab-table{order:1}
+  #tab-schedule{order:2;break-before:page}
+  #tab-stats{order:3;break-before:page}
 
   /* Hide all interactive & nav chrome */
   .tourney-header,.tab-bar,.s-btn,.confirm-zero-btn,#next-round-wrap,
