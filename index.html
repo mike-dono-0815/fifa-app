@@ -2267,7 +2267,7 @@ function renderSetup(){
     card.innerHTML=`
       <span class="player-num">${i+1}</span>
       <div class="flag-preview"><img src="${flagSrc(p.countryCode)}" alt="" onerror="this.style.opacity='0'"/></div>
-      <input class="player-name-input" type="text" placeholder="Player name" value="${p.name}" data-player="${p.id}" />
+      <input class="player-name-input" type="text" placeholder="Player name" value="${p.name}" data-player="${p.id}" maxlength="10" />
       <div class="nat-selector" data-player="${p.id}">
         <button class="nat-toggle">
           <img class="nat-flag-sm" src="${flagSrc(p.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
@@ -2432,9 +2432,12 @@ document.getElementById('btn-add-player').addEventListener('click',()=>{
 document.getElementById('player-list').addEventListener('input',e=>{
   const input=e.target.closest('.player-name-input');
   if(!input)return;
+  const pos=input.selectionStart;
+  const cleaned=input.value.replace(/[^a-zA-Z0-9 ]/g,'').slice(0,10);
+  if(input.value!==cleaned){input.value=cleaned;input.setSelectionRange(pos,pos);}
   const pid=input.dataset.player;
   const p=STATE.players.find(pl=>pl.id===pid);
-  if(p){p.name=input.value;input.classList.remove('error');}
+  if(p){p.name=cleaned;input.classList.remove('error');}
 });
 
 // Remove player
@@ -2521,6 +2524,7 @@ document.getElementById('btn-new-tournament').addEventListener('click',()=>{
     {id:uid(),name:'',countryCode:'',countryName:''},
     {id:uid(),name:'',countryCode:'',countryName:''},
     {id:uid(),name:'',countryCode:'',countryName:''},
+    {id:uid(),name:'',countryCode:'',countryName:''},
   ];
   renderSetup();
 });
@@ -2569,6 +2573,7 @@ document.getElementById('history-list').addEventListener('click',e=>{
   }catch(e){try{localStorage.removeItem(LIVE_KEY);}catch(_){}}
   // Fresh start
   STATE.players=[
+    {id:uid(),name:'',countryCode:'',countryName:''},
     {id:uid(),name:'',countryCode:'',countryName:''},
     {id:uid(),name:'',countryCode:'',countryName:''},
     {id:uid(),name:'',countryCode:'',countryName:''},
