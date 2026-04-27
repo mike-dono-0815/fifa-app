@@ -1429,6 +1429,10 @@ function computeStats(){
   let highestGame=null,highestTotal=0;
   confirmed.forEach(g=>{const t=g.scoreA+g.scoreB;if(t>highestTotal){highestTotal=t;highestGame=g;}});
 
+  // Biggest win
+  let biggestWin=null,biggestDiff=0;
+  confirmed.forEach(g=>{const d=Math.abs(g.scoreA-g.scoreB);if(d>biggestDiff){biggestDiff=d;biggestWin=g;}});
+
   // Per-player
   const ps={};
   STATE.players.forEach(p=>{
@@ -1538,9 +1542,8 @@ function computeStats(){
   }
 
   return{
-    overview:{N,totalGoals,avgGoals,topScoreline,topScorelineCount,highestGame,
-              draws:confirmed.filter(g=>g.scoreA===g.scoreB).length,
-              zeros:confirmed.filter(g=>g.scoreA===0&&g.scoreB===0).length},
+    overview:{N,totalGoals,avgGoals,topScoreline,topScorelineCount,highestGame,biggestWin,
+              draws:confirmed.filter(g=>g.scoreA===g.scoreB).length},
     ps,streaks,partners,h2h,awards,otGames,
   };
 }
@@ -1756,12 +1759,21 @@ function renderStats(){
   function fmtPct(p,v){return Math.round(v*100)+'%';}
   function fmtDec1(p,v){return v.toFixed(2);}
 
+  const n=(ids)=>ids.map(id=>playerName(id)).join(' & ');
+
   // Highest game desc
   let highestGameDesc='—';
   if(overview.highestGame){
     const g=overview.highestGame;
-    const n=(ids)=>ids.map(id=>playerName(id)).join(' & ');
     highestGameDesc=`${n(g.teamA)} ${g.scoreA}–${g.scoreB} ${n(g.teamB)} (${g.scoreA+g.scoreB} goals)`;
+  }
+
+  // Biggest win desc
+  let biggestWinDesc='—';
+  if(overview.biggestWin){
+    const g=overview.biggestWin;
+    const [winner,ws,loser,ls]=g.scoreA>=g.scoreB?[g.teamA,g.scoreA,g.teamB,g.scoreB]:[g.teamB,g.scoreB,g.teamA,g.scoreA];
+    biggestWinDesc=`${n(winner)} ${ws}–${ls} ${n(loser)} (+${ws-ls})`;
   }
 
   // Partner stats array
@@ -1798,9 +1810,10 @@ function renderStats(){
       <div class="stat-card"><div class="stat-card-val">${overview.avgGoals}</div><div class="stat-card-label">Goals / Game</div></div>
       <div class="stat-card"><div class="stat-card-val">${overview.N}</div><div class="stat-card-label">Games Played</div></div>
       <div class="stat-card"><div class="stat-card-val">${overview.draws}</div><div class="stat-card-label">Draws</div></div>
-      <div class="stat-card"><div class="stat-card-val">${overview.zeros}</div><div class="stat-card-label">0–0 Draws</div></div>
+      <div class="stat-card"><div class="stat-card-val" style="color:var(--purple)">${otGames.length}</div><div class="stat-card-label">Total Overtimes</div></div>
       <div class="stat-card"><div class="stat-card-val">${overview.topScorelineCount}×</div><div class="stat-card-label">Most Common Score</div><div class="stat-card-sub">${overview.topScoreline}</div></div>
       <div class="stat-card" style="grid-column:span 2"><div class="stat-card-val" style="font-size:1.1rem">${highestGameDesc}</div><div class="stat-card-label">Highest Scoring Game</div></div>
+      <div class="stat-card" style="grid-column:span 2"><div class="stat-card-val" style="font-size:1.1rem">${biggestWinDesc}</div><div class="stat-card-label">Biggest Win</div></div>
     </div>
   </div>
 
