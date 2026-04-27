@@ -1365,6 +1365,7 @@ function generateSchedule(round){
     const j=Math.floor(Math.random()*(i+1));
     [games[i],games[j]]=[games[j],games[i]];
   }
+  games.forEach(g=>{if(Math.random()<.5)[g.teamA,g.teamB]=[g.teamB,g.teamA];});
   return games.map((g,idx)=>({
     id:`g${round}_${idx}_${uid()}`,
     round,
