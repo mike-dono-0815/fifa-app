@@ -926,6 +926,27 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
 }
 .award-desc{font-size:.78rem;color:var(--text-muted)}
 
+/* Current Form (table tab) */
+.form-row{display:flex;align-items:center;gap:8px;padding:7px 2px;border-bottom:1px solid var(--border-subtle)}
+.form-flag{height:18px;width:26px;border-radius:2px;object-fit:cover;flex-shrink:0}
+.form-name{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700;font-size:1.05rem;
+  text-transform:uppercase;letter-spacing:.03em;
+  min-width:70px;
+}
+.form-dots{display:flex;gap:3px;flex:1}
+.form-dot{
+  width:20px;height:20px;border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.72rem;
+}
+.form-dot.W{background:rgba(0,230,118,.2);color:var(--win)}
+.form-dot.D{background:rgba(0,180,255,.15);color:var(--draw)}
+.form-dot.L{background:rgba(255,77,77,.2);color:var(--loss)}
+.form-dot.empty{background:var(--bg-raised)}
+.form-streak{font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:700;min-width:72px;text-align:right;white-space:nowrap}
+
 /* OT section hidden until OT games exist */
 #stats-ot-section{display:none}
 
@@ -1228,6 +1249,7 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
         <tbody id="standings-tbody"></tbody>
       </table>
     </div>
+    <div id="table-extras"></div>
   </div>
 
   <div id="tab-stats" class="tab-panel">
@@ -1634,6 +1656,69 @@ function renderStandings(){
     `;
     tbody.appendChild(tr);
   });
+  renderTableExtras();
+}
+
+function awardCard(icon,title,pid,desc,style=''){
+  if(!pid)return`<div class="award-card" style="opacity:.4"><div class="award-icon">${icon}</div><div class="award-title">${title}</div><div class="award-desc">Not enough data yet</div></div>`;
+  const pl=playerById(pid);
+  return`<div class="award-card ${style}">
+    <div class="award-icon">${icon}</div>
+    <div class="award-title">${title}</div>
+    <div class="award-player">
+      <img src="${flagSrc(pl.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
+      <span class="award-player-name">${pl.name}</span>
+    </div>
+    <div class="award-desc">${desc}</div>
+  </div>`;
+}
+
+function renderTableExtras(){
+  const el=document.getElementById('table-extras');
+  if(!el)return;
+  const confirmed=STATE.games.filter(g=>g.confirmed);
+  if(confirmed.length===0){el.innerHTML='';return;}
+
+  const standings=computeStandings();
+  const {ps,streaks,awards,otGames}=computeStats();
+
+  const formRows=standings.map(r=>{
+    const p=playerById(r.id);
+    const results=ps[r.id]?.gameResults||[];
+    const last10=results.slice(-10);
+    const padded=[...Array(Math.max(0,10-last10.length)).fill('empty'),...last10];
+    const st=streaks[r.id];
+    const col=st?.type==='W'?'var(--win)':st?.type==='L'?'var(--loss)':'var(--draw)';
+    const streakStr=st?.current?`${st.current}${st.type} streak`:'';
+    return`<div class="form-row">
+      <img class="form-flag" src="${flagSrc(p.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
+      <span class="form-name">${p.name}</span>
+      <div class="form-dots">${padded.map(x=>`<span class="form-dot ${x}">${x==='empty'?'':x}</span>`).join('')}</div>
+      ${streakStr?`<span class="form-streak" style="color:${col}">${streakStr}</span>`:'<span class="form-streak"></span>'}
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div class="stats-section" style="margin-top:24px">
+      <div class="stats-section-title">Current Form</div>
+      ${formRows}
+    </div>
+    <div class="stats-section">
+      <div class="stats-section-title">Awards</div>
+      <div class="awards-grid">
+        ${awardCard('⚽','Top Scorer',awards.topScorer?.id,`${awards.topScorer?awards.topScorer.gf:0} goals`,'gold-award')}
+        ${awardCard('🧤','Golden Glove',awards.goldenGlove?.id,awards.goldenGlove?`${(awards.goldenGlove.ga/awards.goldenGlove.gp).toFixed(2)} GA/game`:'')}
+        ${awardCard('🏆','MVP',awards.mvp?.id,`${awards.mvp?awards.mvp.pts:0} points`,'gold-award')}
+        ${awardCard('📈','Goal Machine',awards.goalMachine?.id,awards.goalMachine?`${(awards.goalMachine.gf/awards.goalMachine.gp).toFixed(2)} goals/game`:'','blue-award')}
+        ${awardCard('🧱','Brick Wall',awards.brickWall?.id,`${awards.brickWall?awards.brickWall.cleanSheets:0} clean sheets`,'blue-award')}
+        ${awardCard('💎','Unbreakable',awards.unbreakable?.id,awards.unbreakable?`${streaks[awards.unbreakable.id].longestUnbeaten}-game unbeaten streak`:'')}
+        ${awardCard('😬','Liability',awards.liability?.id,`${awards.liability?awards.liability.ga:0} goals conceded`,'red-award')}
+        ${awardCard('😓','Punching Bag',awards.punchingBag?.id,`${awards.punchingBag?awards.punchingBag.l:0} losses`,'red-award')}
+        ${otGames.length>=2&&awards.clutchPlayer?awardCard('⚡','Clutch Player',awards.clutchPlayer?.id,`${Math.round(awards.clutchPlayer.otW/awards.clutchPlayer.otGP*100)}% OT win rate`,'purple-award'):''}
+        ${otGames.length>=2&&awards.bottler?awardCard('🫣','Bottler',awards.bottler?.id,`${Math.round(awards.bottler.otW/awards.bottler.otGP*100)}% OT win rate`,'red-award'):''}
+        ${otGames.length>=1&&awards.otMagnet?awardCard('🕐','OT Magnet',awards.otMagnet?.id,`${awards.otMagnet?awards.otMagnet.otGP:0} OT games`,'purple-award'):''}
+      </div>
+    </div>`;
 }
 
 /* ════════════════════════════════════════
@@ -1738,21 +1823,6 @@ function renderStats(){
       html+=`</tr>`;
     });
     return html+`</tbody></table></div>`;
-  }
-
-  // Award card
-  function awardCard(icon,title,pid,desc,style=''){
-    if(!pid)return`<div class="award-card" style="opacity:.4"><div class="award-icon">${icon}</div><div class="award-title">${title}</div><div class="award-desc">Not enough data yet</div></div>`;
-    const pl=playerById(pid);
-    return`<div class="award-card ${style}">
-      <div class="award-icon">${icon}</div>
-      <div class="award-title">${title}</div>
-      <div class="award-player">
-        <img src="${flagSrc(pl.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
-        <span class="award-player-name">${pl.name}</span>
-      </div>
-      <div class="award-desc">${desc}</div>
-    </div>`;
   }
 
   function fmt1(p,v){return v;}
