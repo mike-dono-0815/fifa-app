@@ -1391,35 +1391,51 @@ function combinations(arr,k){
 
 function generateSchedule(round){
   const ids=STATE.players.map(p=>p.id);
-  const games=[];
+  const rawGames=[];
   const groups=combinations(ids,4);
   for(const [A,B,C,D] of groups){
-    games.push({teamA:[A,B],teamB:[C,D]});
-    games.push({teamA:[A,C],teamB:[B,D]});
-    games.push({teamA:[A,D],teamB:[B,C]});
+    rawGames.push({teamA:[A,B],teamB:[C,D]});
+    rawGames.push({teamA:[A,C],teamB:[B,D]});
+    rawGames.push({teamA:[A,D],teamB:[B,C]});
   }
-  for(let i=games.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [games[i],games[j]]=[games[j],games[i]];
-  }
-  // Repair: ensure no player sits out two consecutive games (max 1 break)
-  const sitOf=g=>ids.filter(id=>!g.teamA.includes(id)&&!g.teamB.includes(id));
-  const clashes=(g1,g2)=>sitOf(g1).some(id=>sitOf(g2).includes(id));
-  for(let pass=0;pass<2;pass++){
-    for(let i=0;i<games.length-1;i++){
-      if(clashes(games[i],games[i+1])){
-        for(let j=i+2;j<games.length;j++){
-          if(!clashes(games[i],games[j])){
-            [games[i+1],games[j]]=[games[j],games[i+1]];
-            break;
+  const shuffle=arr=>{for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;};
+
+  let ordered;
+  if(ids.length===5){
+    // 5-player optimised path
+    // Group the 15 games by which player sits out (5 buckets × 3 games each)
+    const sitOf=g=>ids.find(id=>!g.teamA.includes(id)&&!g.teamB.includes(id));
+    const buckets={};
+    ids.forEach(id=>{buckets[id]=[];});
+    rawGames.forEach(g=>buckets[sitOf(g)].push(g));
+    ids.forEach(id=>shuffle(buckets[id])); // randomise matchups within each sit-out slot
+
+    // One shared random sit-out order repeated 3 times:
+    //   player k sits out at positions k, k+5, k+10  →  gaps always exactly 5
+    //   no consecutive same sit-out guaranteed by construction (all 5 distinct)
+    const playerOrder=shuffle([...ids]);
+    const bIdx=Object.fromEntries(ids.map(id=>[id,0]));
+    ordered=[];
+    for(let r=0;r<3;r++) for(const pid of playerOrder) ordered.push(buckets[pid][bIdx[pid]++]);
+  } else {
+    // Generic path: shuffle + greedy repair
+    ordered=shuffle(rawGames);
+    const sitOf=g=>ids.filter(id=>!g.teamA.includes(id)&&!g.teamB.includes(id));
+    const clashes=(g1,g2)=>sitOf(g1).some(id=>sitOf(g2).includes(id));
+    for(let pass=0;pass<2;pass++){
+      for(let i=0;i<ordered.length-1;i++){
+        if(clashes(ordered[i],ordered[i+1])){
+          for(let j=i+2;j<ordered.length;j++){
+            if(!clashes(ordered[i],ordered[j])){[ordered[i+1],ordered[j]]=[ordered[j],ordered[i+1]];break;}
           }
         }
       }
     }
   }
-  games.forEach(g=>{if(Math.random()<.5)[g.teamA,g.teamB]=[g.teamB,g.teamA];});
-  return games.map((g,idx)=>({
-    id:`g${round}_${idx}_${uid()}`,
+
+  ordered.forEach(g=>{if(Math.random()<.5)[g.teamA,g.teamB]=[g.teamB,g.teamA];});
+  return ordered.map((g,i)=>({
+    id:`g${round}_${i}_${uid()}`,
     round,
     teamA:g.teamA,
     teamB:g.teamB,
