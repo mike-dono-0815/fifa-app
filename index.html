@@ -1910,7 +1910,7 @@ function playerPairHTML(ids,side){
   return ids.map(id=>{
     const p=playerById(id);
     return`<span class="player-inline"><span class="pair-name">${p.name}</span><span class="pair-dash">–</span><img class="pair-flag" src="${flagSrc(p.countryCode)}" alt="" onerror="this.style.opacity='0'"/></span>`;
-  }).join('<span class="pair-sep">/</span>');
+  }).join(' ');
 }
 
 function createGameRow(game,gameNum,totalGames){
