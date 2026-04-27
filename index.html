@@ -60,7 +60,97 @@ body{
 /* ── Screen toggling ── */
 .screen{display:none}
 body[data-screen="setup"] #screen-setup{display:flex}
+body[data-screen="draw"] #screen-draw{display:flex}
 body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:column;min-height:100vh}
+
+/* ════════════════════════════
+   DRAW SCREEN
+════════════════════════════ */
+#screen-draw{
+  min-height:100vh;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:28px;
+  padding:40px 20px;
+  background:var(--bg-void);
+  position:relative;
+  overflow:hidden;
+}
+#screen-draw::before{
+  content:'';
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(0,180,255,.07) 0%,transparent 70%);
+  pointer-events:none;
+}
+.draw-trophy{
+  width:90px;height:auto;
+  filter:brightness(2) sepia(.35) saturate(3) hue-rotate(-10deg)
+         drop-shadow(0 0 30px rgba(255,215,0,.6));
+  animation:draw-trophy-float 2s ease-in-out infinite;
+}
+@keyframes draw-trophy-float{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-10px) scale(1.04)}
+}
+.draw-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:900;font-style:italic;font-size:clamp(2rem,8vw,3.2rem);
+  text-transform:uppercase;letter-spacing:.05em;
+  background:linear-gradient(135deg,#fff 0%,var(--blue-neon) 50%,var(--green-bright) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.draw-drum-wrap{
+  width:min(340px,90vw);
+  height:56px;
+  border:1px solid var(--border-mid);
+  border-radius:var(--r);
+  background:var(--bg-raised);
+  overflow:hidden;
+  position:relative;
+  box-shadow:0 0 24px var(--blue-glow);
+}
+.draw-drum-wrap::before,.draw-drum-wrap::after{
+  content:'';position:absolute;left:0;right:0;height:16px;z-index:2;pointer-events:none;
+}
+.draw-drum-wrap::before{top:0;background:linear-gradient(to bottom,var(--bg-raised),transparent)}
+.draw-drum-wrap::after{bottom:0;background:linear-gradient(to top,var(--bg-raised),transparent)}
+.draw-drum{
+  display:flex;flex-direction:column;align-items:center;
+  transition:none;
+}
+.draw-drum-item{
+  height:56px;line-height:56px;
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.5rem;
+  text-transform:uppercase;letter-spacing:.06em;
+  color:var(--text-primary);white-space:nowrap;
+  flex-shrink:0;
+}
+.draw-status{
+  font-size:.95rem;color:var(--text-secondary);letter-spacing:.08em;text-transform:uppercase;
+  min-height:1.4em;text-align:center;
+}
+.draw-dots{display:flex;gap:8px;align-items:center}
+.draw-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--text-muted);
+  animation:draw-dot-pulse 1.2s ease-in-out infinite;
+}
+.draw-dot:nth-child(2){animation-delay:.2s}
+.draw-dot:nth-child(3){animation-delay:.4s}
+@keyframes draw-dot-pulse{
+  0%,80%,100%{transform:scale(1);opacity:.4}
+  40%{transform:scale(1.5);opacity:1}
+}
+.draw-ready{
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.4rem;
+  text-transform:uppercase;letter-spacing:.1em;
+  color:var(--green-bright);
+  text-shadow:0 0 20px var(--green-glow);
+  opacity:0;transition:opacity .5s;
+  pointer-events:none;
+}
+.draw-ready.visible{opacity:1}
 
 /* ════════════════════════════
    SETUP SCREEN
@@ -1189,6 +1279,24 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
 </style>
 </head>
 <body data-screen="setup">
+
+<!-- ══════════════════════════════
+     DRAW SCREEN
+══════════════════════════════ -->
+<section id="screen-draw" class="screen">
+  <img class="draw-trophy" src="trophy_fa.png" alt="Trophy"/>
+  <div class="draw-title">Drawing the Schedule</div>
+  <div class="draw-drum-wrap">
+    <div class="draw-drum" id="draw-drum"></div>
+  </div>
+  <div class="draw-status" id="draw-status">Shuffling players…</div>
+  <div class="draw-dots" id="draw-dots">
+    <div class="draw-dot"></div>
+    <div class="draw-dot"></div>
+    <div class="draw-dot"></div>
+  </div>
+  <div class="draw-ready" id="draw-ready">Schedule Ready!</div>
+</section>
 
 <!-- ══════════════════════════════
      SETUP SCREEN
@@ -2454,6 +2562,68 @@ function comb(n,k){
 function showScreen(name){document.body.dataset.screen=name;}
 
 /* ════════════════════════════════════════
+   DRAW SCREEN ANIMATION
+════════════════════════════════════════ */
+function runDrawScreen(players,onComplete){
+  const drum=document.getElementById('draw-drum');
+  const status=document.getElementById('draw-status');
+  const dots=document.getElementById('draw-dots');
+  const ready=document.getElementById('draw-ready');
+
+  // Reset state
+  ready.classList.remove('visible');
+  dots.style.display='flex';
+
+  // Build the scrolling item list: player names repeated enough to scroll through
+  const names=players.map(p=>p.name);
+  const items=[];
+  for(let i=0;i<60;i++)items.push(names[i%names.length]);
+  const itemH=56;
+  drum.innerHTML=items.map(n=>`<div class="draw-drum-item">${n}</div>`).join('');
+  drum.style.transform='translateY(0)';
+
+  const totalDist=items.length*itemH - itemH; // scroll to last item
+  const DURATION=4200; // ms
+  let start=null;
+
+  // Ease-out cubic: fast start, gradual slow-down
+  function easeOutCubic(t){return 1-Math.pow(1-t,3);}
+
+  const phases=[
+    {at:0,    text:'Shuffling players…'},
+    {at:0.3,  text:'Arranging match-ups…'},
+    {at:0.6,  text:'Optimizing schedule…'},
+    {at:0.85, text:'Almost there…'},
+  ];
+  let phaseIdx=0;
+
+  function tick(ts){
+    if(!start)start=ts;
+    const elapsed=ts-start;
+    const t=Math.min(elapsed/DURATION,1);
+    const dist=easeOutCubic(t)*totalDist;
+    drum.style.transform=`translateY(-${dist}px)`;
+
+    // Phase labels
+    while(phaseIdx<phases.length && t>=phases[phaseIdx].at){
+      status.textContent=phases[phaseIdx].text;
+      phaseIdx++;
+    }
+
+    if(t<1){
+      requestAnimationFrame(tick);
+    } else {
+      // Done — show ready state
+      dots.style.display='none';
+      status.textContent='';
+      ready.classList.add('visible');
+      setTimeout(onComplete,700);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ════════════════════════════════════════
    TAB SWITCH
 ════════════════════════════════════════ */
 function switchTab(name){
@@ -2521,11 +2691,14 @@ document.getElementById('btn-generate').addEventListener('click',()=>{
   STATE.games=generateSchedule(1);
   STATE.currentRound=1;
   STATE.createdAt=Date.now();
-  showScreen('tournament');
-  renderSchedule();
-  renderStandings();
-  renderStats();
-  saveState();
+  showScreen('draw');
+  runDrawScreen(STATE.players,()=>{
+    showScreen('tournament');
+    renderSchedule();
+    renderStandings();
+    renderStats();
+    saveState();
+  });
 });
 
 // Tab switching
