@@ -411,6 +411,7 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   position:relative;
 }
 .game-row:hover{border-color:var(--border-mid);box-shadow:0 0 16px var(--blue-glow)}
+.game-row.locked{opacity:.32;pointer-events:none}
 .game-row.confirmed{
   border-left:3px solid var(--green-bright);
   box-shadow:inset 4px 0 12px var(--green-glow);
@@ -1401,6 +1402,21 @@ function generateSchedule(round){
     const j=Math.floor(Math.random()*(i+1));
     [games[i],games[j]]=[games[j],games[i]];
   }
+  // Repair: ensure no player sits out two consecutive games (max 1 break)
+  const sitOf=g=>ids.filter(id=>!g.teamA.includes(id)&&!g.teamB.includes(id));
+  const clashes=(g1,g2)=>sitOf(g1).some(id=>sitOf(g2).includes(id));
+  for(let pass=0;pass<2;pass++){
+    for(let i=0;i<games.length-1;i++){
+      if(clashes(games[i],games[i+1])){
+        for(let j=i+2;j<games.length;j++){
+          if(!clashes(games[i],games[j])){
+            [games[i+1],games[j]]=[games[j],games[i+1]];
+            break;
+          }
+        }
+      }
+    }
+  }
   games.forEach(g=>{if(Math.random()<.5)[g.teamA,g.teamB]=[g.teamB,g.teamA];});
   return games.map((g,idx)=>({
     id:`g${round}_${idx}_${uid()}`,
@@ -2076,6 +2092,20 @@ function renderSchedule(){
   checkRoundComplete();
 }
 
+function updateRoundLocks(round){
+  const block=document.querySelector(`.round-block[data-round="${round}"]`);
+  if(!block)return;
+  applyRoundLocks(block,round);
+}
+
+function applyRoundLocks(block,round){
+  const roundGames=STATE.games.filter(g=>g.round===round);
+  const firstUnconf=roundGames.findIndex(g=>!g.confirmed);
+  block.querySelectorAll('.game-row').forEach((row,i)=>{
+    row.classList.toggle('locked',firstUnconf>=0&&i>firstUnconf);
+  });
+}
+
 function buildRoundBlock(round){
   const games=STATE.games.filter(g=>g.round===round);
   const done=games.filter(g=>g.confirmed).length;
@@ -2091,6 +2121,7 @@ function buildRoundBlock(round){
   const frag=document.createDocumentFragment();
   games.forEach((g,i)=>frag.appendChild(createGameRow(g,i+1,games.length)));
   block.appendChild(frag);
+  applyRoundLocks(block,round);
   return block;
 }
 
@@ -2143,6 +2174,7 @@ function handleScore(gameId,side,delta){
   game.touched=true;
   updateGameRow(gameId);
   updateRoundProgress(game.round);
+  updateRoundLocks(game.round);
   renderStandings();
   renderStats();
   checkRoundComplete();
@@ -2156,6 +2188,7 @@ function handleConfirmZero(gameId){
   game.touched=true;
   updateGameRow(gameId);
   updateRoundProgress(game.round);
+  updateRoundLocks(game.round);
   renderStandings();
   renderStats();
   checkRoundComplete();
