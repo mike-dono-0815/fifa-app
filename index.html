@@ -1080,6 +1080,17 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   transition:all .2s;
 }
 .btn-clear-saves:hover{border-color:var(--loss);color:var(--loss)}
+.btn-delete-all-saves{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700;font-size:.75rem;
+  text-transform:uppercase;letter-spacing:.06em;
+  color:var(--loss);
+  border:1px solid rgba(255,77,77,.35);
+  border-radius:var(--r-sm);
+  padding:4px 10px;
+  transition:all .2s;
+}
+.btn-delete-all-saves:hover{background:rgba(255,77,77,.12);border-color:var(--loss)}
 
 /* ── Animations & Utils ── */
 @keyframes shake{
@@ -1264,7 +1275,10 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
 <div id="history-panel">
   <div class="history-header">
     <h2>&#9202; Save History</h2>
-    <button class="btn-close-history" id="btn-close-history">&#10005;</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn-delete-all-saves" id="btn-delete-all-saves">Delete All</button>
+      <button class="btn-close-history" id="btn-close-history">&#10005;</button>
+    </div>
   </div>
   <div class="history-list" id="history-list"></div>
   <div class="history-footer">
@@ -2515,10 +2529,12 @@ document.getElementById('btn-new-tournament').addEventListener('click',()=>{
 document.getElementById('btn-history').addEventListener('click',openHistory);
 document.getElementById('btn-close-history').addEventListener('click',closeHistory);
 document.getElementById('history-overlay').addEventListener('click',closeHistory);
-document.getElementById('btn-clear-saves').addEventListener('click',()=>{
+function clearAllSaves(){
   if(!confirm('Delete all saves?'))return;
   putSnapshots([]);currentSaveKey=null;updateSaveBadge();renderHistoryList();
-});
+}
+document.getElementById('btn-clear-saves').addEventListener('click',clearAllSaves);
+document.getElementById('btn-delete-all-saves').addEventListener('click',clearAllSaves);
 document.getElementById('history-list').addEventListener('click',e=>{
   const loadBtn=e.target.closest('.btn-load-save');
   if(loadBtn){const snaps=getSnapshots();loadSnapshot(snaps[+loadBtn.dataset.idx]);return;}
