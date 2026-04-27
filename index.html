@@ -1522,9 +1522,13 @@ function computeStats(){
     const results=ps[p.id].gameResults;
     let cur=0,curType='',longestW=0,longestUnbeaten=0,curUnbeaten=0;
     results.forEach(r=>{
-      if(r==='W'){cur=(curType==='W'?cur:0)+1;curType='W';curUnbeaten++;}
-      else if(r==='D'){if(curType!=='D'&&curType!=='W')cur=0;curType='D';curUnbeaten++;}
-      else{cur=(curType==='L'?cur:0)+1;curType='L';curUnbeaten=0;}
+      if(r==='W'){
+        cur=(curType==='W'?cur:0)+1;curType='W';curUnbeaten++;
+      } else if(r==='D'){
+        curUnbeaten++;curType='D';cur=curUnbeaten; // cur = full unbeaten length
+      } else {
+        cur=(curType==='L'?cur:0)+1;curType='L';curUnbeaten=0;
+      }
       if(curType==='W')longestW=Math.max(longestW,cur);
       longestUnbeaten=Math.max(longestUnbeaten,curUnbeaten);
     });
@@ -1719,7 +1723,8 @@ function renderTableExtras(){
     const padded=[...Array(Math.max(0,10-last10.length)).fill('empty'),...last10];
     const st=streaks[r.id];
     const col=st?.type==='W'?'var(--win)':st?.type==='L'?'var(--loss)':'var(--draw)';
-    const streakStr=st?.current?`${st.current}${st.type} streak`:'';
+    const streakLabel=st?.type==='W'?'W streak':st?.type==='L'?'L streak':'game unbeaten';
+    const streakStr=st?.current?`${st.current} ${streakLabel}`:'';
     return`<div class="form-row">
       <img class="form-flag" src="${flagSrc(p.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
       <span class="form-name">${p.name}</span>
