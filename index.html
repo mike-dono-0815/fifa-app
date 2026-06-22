@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FC 2026 Tournament – The Revenge</title>
+<title>FC 2026 Tournament – WC Edition</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,800;1,900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -1202,6 +1202,28 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   .flag-preview{display:none}
   .nat-flag-sm{width:30px;height:20px}
   .nat-name-label{font-size:.75rem;max-width:100px}
+
+  /* Stack +/− buttons above/below the score on mobile */
+  .score-row{
+    display:grid;
+    grid-template-columns:auto auto auto;
+    grid-template-rows:auto auto auto;
+    gap:2px;
+    justify-items:center;
+    align-items:center;
+  }
+  /* Current child order: 1=−A, 2=A_val, 3=+A, 4=sep, 5=+B, 6=B_val, 7=−B */
+  .score-row>:nth-child(1){grid-column:1;grid-row:3}  /* −A → bottom-left */
+  .score-row>:nth-child(2){grid-column:1;grid-row:2}  /* A_val → mid-left */
+  .score-row>:nth-child(3){grid-column:1;grid-row:1}  /* +A → top-left */
+  .score-row>:nth-child(4){grid-column:2;grid-row:2}  /* sep → centre */
+  .score-row>:nth-child(5){grid-column:3;grid-row:1}  /* +B → top-right */
+  .score-row>:nth-child(6){grid-column:3;grid-row:2}  /* B_val → mid-right */
+  .score-row>:nth-child(7){grid-column:3;grid-row:3}  /* −B → bottom-right */
+
+  .s-btn{width:30px;height:30px;font-size:.95rem}
+  .s-val{font-size:1.6rem}
+  .s-sep{font-size:1.6rem;padding:0 6px}
 }
 @media(max-width:480px){
   .player-card{grid-template-columns:20px 1fr 1.4fr 24px;gap:6px}
@@ -1304,7 +1326,7 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
 <section id="screen-setup" class="screen">
   <div class="setup-hero">
     <h1>FC 2026 Tournament</h1>
-    <p class="subtitle">The Revenge &nbsp;·&nbsp; 2v2 Edition</p>
+    <p class="subtitle">WC Edition &nbsp;·&nbsp; 2v2 Edition</p>
   </div>
   <div class="setup-panel">
     <p class="section-label">Players</p>
@@ -1323,7 +1345,7 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
 <section id="screen-tournament" class="screen">
   <div class="tourney-header">
     <div class="tourney-header-top">
-      <h1 class="tourney-title">FC 2026 &mdash; The Revenge</h1>
+      <h1 class="tourney-title">FC 2026 &mdash; WC Edition</h1>
       <div class="header-actions">
         <button class="btn-history" id="btn-history">
           &#9202; Saves <span class="save-badge" id="save-badge">0</span>
