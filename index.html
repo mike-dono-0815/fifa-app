@@ -613,7 +613,8 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   transition:all .2s;
   user-select:none;
 }
-.ot-badge:hover{border-color:var(--purple);color:var(--purple)}
+.ot-badge:not([data-action]){cursor:default}
+.ot-badge[data-action]:hover{border-color:var(--purple);color:var(--purple)}
 .ot-badge.active{
   border-color:var(--purple);
   color:var(--purple);
@@ -1261,6 +1262,9 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   .score-row>:nth-child(5){grid-column:3;grid-row:1}  /* +B → top-right */
   .score-row>:nth-child(6){grid-column:3;grid-row:2}  /* B_val → mid-right */
   .score-row>:nth-child(7){grid-column:3;grid-row:3}  /* −B → bottom-right */
+
+  .score-row.readonly{display:flex!important}
+  .score-row.readonly>*{grid-column:auto!important;grid-row:auto!important}
 
   .s-btn{width:24px;height:24px;font-size:.8rem}
   .s-val{font-size:2.4rem}
@@ -2327,11 +2331,13 @@ function createGameRow(game,gameNum,totalGames){
   div.className='game-row'+(game.confirmed?' confirmed':'')+(game.overtime?' ot-game':'');
   div.dataset.gameId=game.id;
   const confirmmable=!game.touched&&!game.confirmed;
-  div.innerHTML=`
-    <div class="game-num-label"><span class="game-num-n">${gameNum}</span><span>of&nbsp;${totalGames}</span></div>
-    <div class="team team-a">${playerPairHTML(game.teamA,'a')}</div>
-    <div class="score-ctrl">
-      <span class="ot-badge${game.overtime?' active':''}" data-game="${game.id}" data-action="ot">OT</span>
+  const readonly=!!loadedFinishedId;
+  const scoreRow=readonly?`
+      <div class="score-row readonly">
+        <span class="s-val" data-game="${game.id}" data-side="a">${game.scoreA}</span>
+        <span class="s-sep">&ndash;</span>
+        <span class="s-val" data-game="${game.id}" data-side="b">${game.scoreB}</span>
+      </div>`:`
       <div class="score-row">
         <button class="s-btn" data-game="${game.id}" data-side="a" data-delta="-1" ${game.scoreA===0?'disabled':''}>−</button>
         <span class="s-val" data-game="${game.id}" data-side="a">${game.scoreA}</span>
@@ -2340,7 +2346,13 @@ function createGameRow(game,gameNum,totalGames){
         <button class="s-btn" data-game="${game.id}" data-side="b" data-delta="1">+</button>
         <span class="s-val" data-game="${game.id}" data-side="b">${game.scoreB}</span>
         <button class="s-btn" data-game="${game.id}" data-side="b" data-delta="-1" ${game.scoreB===0?'disabled':''}>−</button>
-      </div>
+      </div>`;
+  div.innerHTML=`
+    <div class="game-num-label"><span class="game-num-n">${gameNum}</span><span>of&nbsp;${totalGames}</span></div>
+    <div class="team team-a">${playerPairHTML(game.teamA,'a')}</div>
+    <div class="score-ctrl">
+      <span class="ot-badge${game.overtime?' active':''}"${readonly?'':` data-game="${game.id}" data-action="ot"`}>OT</span>
+      ${scoreRow}
       <div class="status-dot ${game.confirmed?'confirmed':'unconfirmed'}"></div>
     </div>
     <div class="team team-b">${playerPairHTML(game.teamB,'b')}</div>
@@ -2451,7 +2463,7 @@ function updateRoundProgress(round){
 ════════════════════════════════════════ */
 function checkRoundComplete(){
   const roundGames=STATE.games.filter(g=>g.round===STATE.currentRound);
-  const allDone=roundGames.length>0&&roundGames.every(g=>g.confirmed);
+  const allDone=!loadedFinishedId&&roundGames.length>0&&roundGames.every(g=>g.confirmed);
   const wrap=document.getElementById('next-round-wrap');
   const btn=document.getElementById('btn-next-round');
   wrap.className='next-round-wrap'+(allDone?' visible':'');
@@ -2462,6 +2474,7 @@ function checkRoundComplete(){
    SCORE HANDLING
 ════════════════════════════════════════ */
 function handleScore(gameId,side,delta){
+  if(loadedFinishedId)return;
   const game=STATE.games.find(g=>g.id===gameId);
   if(!game)return;
   if(side==='a') game.scoreA=Math.max(0,game.scoreA+delta);
@@ -2478,6 +2491,7 @@ function handleScore(gameId,side,delta){
 }
 
 function handleConfirmZero(gameId){
+  if(loadedFinishedId)return;
   const game=STATE.games.find(g=>g.id===gameId);
   if(!game)return;
   game.confirmed=true;
@@ -2492,6 +2506,7 @@ function handleConfirmZero(gameId){
 }
 
 function handleOT(gameId){
+  if(loadedFinishedId)return;
   const game=STATE.games.find(g=>g.id===gameId);
   if(!game)return;
   game.overtime=!game.overtime;
@@ -2954,6 +2969,7 @@ document.getElementById('btn-final-scores').addEventListener('click',()=>{
 
 // Next round
 document.getElementById('btn-next-round').addEventListener('click',()=>{
+  if(loadedFinishedId)return;
   STATE.currentRound++;
   const newGames=generateSchedule(STATE.currentRound);
   STATE.games.push(...newGames);

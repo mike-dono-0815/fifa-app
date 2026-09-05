@@ -1396,11 +1396,7 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
     <div class="tourney-header-top">
       <h1 class="tourney-title">FC 2026 &mdash; WC Edition</h1>
       <div class="header-actions">
-        <button class="btn-history" id="btn-history">
-          &#9202; Saves <span class="save-badge" id="save-badge">0</span>
-        </button>
         <button class="btn-pdf" id="btn-pdf">&#128196; PDF</button>
-        <button class="btn-new-tournament" id="btn-new-tournament">New Tournament</button>
       </div>
     </div>
     <div class="tab-bar">
@@ -2981,26 +2977,8 @@ document.getElementById('btn-next-round').addEventListener('click',()=>{
 // PDF export
 document.getElementById('btn-pdf').addEventListener('click',()=>window.print());
 
-// New tournament
-document.getElementById('btn-new-tournament').addEventListener('click',()=>{
-  if(!confirm('Start a new tournament? All current progress will be lost.'))return;
-  archiveFinishedTournament();
-  STATE.players=[];STATE.games=[];STATE.currentRound=1;STATE.createdAt=null;
-  currentSaveKey=null;
-  loadedFinishedId=null;
-  showScreen('setup');
-  STATE.players=[
-    {id:uid(),name:'',countryCode:'',countryName:''},
-    {id:uid(),name:'',countryCode:'',countryName:''},
-    {id:uid(),name:'',countryCode:'',countryName:''},
-    {id:uid(),name:'',countryCode:'',countryName:''},
-    {id:uid(),name:'',countryCode:'',countryName:''},
-  ];
-  renderSetup();
-});
-
-// History panel
-document.getElementById('btn-history').addEventListener('click',openHistory);
+// History panel (no open button on this permalink page — the archived
+// tournament isn't meant to be replaced or re-saved from here)
 document.getElementById('btn-close-history').addEventListener('click',closeHistory);
 document.getElementById('history-overlay').addEventListener('click',closeHistory);
 function clearAllSaves(){
