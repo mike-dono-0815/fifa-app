@@ -185,6 +185,47 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   letter-spacing:.1em;
   text-transform:uppercase;
 }
+.demo-panel{
+  width:100%;
+  max-width:660px;
+  margin:0 auto 28px;
+}
+.demo-list{display:flex;flex-direction:column;gap:10px}
+.demo-card{
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:center;
+  gap:12px;
+  background:var(--bg-surface);
+  border:1px solid var(--border-subtle);
+  border-radius:var(--r);
+  padding:14px 16px;
+  text-align:left;
+  transition:border-color .2s,transform .1s;
+  cursor:pointer;
+}
+.demo-card:hover{border-color:var(--blue-neon)}
+.demo-card:active{transform:scale(.99)}
+.demo-card-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:800;
+  font-size:1.05rem;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  color:var(--text-primary);
+  margin-bottom:4px;
+}
+.demo-card-flags{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.demo-card-flags img{width:22px;height:15px;border-radius:2px;object-fit:cover}
+.demo-card-meta{color:var(--text-muted);font-size:.8rem}
+.demo-card-winner{
+  display:flex;align-items:center;gap:6px;
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:700;
+  font-size:.85rem;
+  color:var(--green-bright);
+  white-space:nowrap;
+}
 .setup-panel{
   width:100%;
   max-width:660px;
@@ -1328,6 +1369,10 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
     <h1>FC 2026 Tournament</h1>
     <p class="subtitle">WC Edition &nbsp;·&nbsp; 2v2 Edition</p>
   </div>
+  <div class="demo-panel" id="demo-panel">
+    <p class="section-label">Finished Tournaments</p>
+    <div class="demo-list" id="demo-list"></div>
+  </div>
   <div class="setup-panel">
     <p class="section-label">Players</p>
     <div id="player-list"></div>
@@ -1491,6 +1536,40 @@ const STATE = {
   createdAt: null,
 };
 let currentSaveKey = null;
+
+/* ════════════════════════════════════════
+   DEMO TOURNAMENTS
+════════════════════════════════════════ */
+const DEMO_TOURNAMENTS = [
+  {
+    id:'demo_garcia_goodbye',
+    title:'Garcia · MichaelD · Nontas · Rakshith',
+    meta:'4 Players · Round 2 · 4/6 games played',
+    winnerName:'Rakshith',
+    players:[
+      {name:'Garcia',code:'co'},{name:'MichaelD',code:'at'},
+      {name:'Nontas',code:'gr'},{name:'Rakshith',code:'in'},
+    ],
+    state:{
+      currentRound:2,
+      createdAt:1745740000000,
+      players:[
+        {id:'demo_garcia',name:'Garcia',countryCode:'co',countryName:'Colombia'},
+        {id:'demo_michaeld',name:'MichaelD',countryCode:'at',countryName:'Austria'},
+        {id:'demo_nontas',name:'Nontas',countryCode:'gr',countryName:'Greece'},
+        {id:'demo_rakshith',name:'Rakshith',countryCode:'in',countryName:'India'},
+      ],
+      games:[
+        {id:'g1_0_demo01',round:1,teamA:['demo_nontas','demo_rakshith'],teamB:['demo_garcia','demo_michaeld'],scoreA:1,scoreB:2,confirmed:true,overtime:false,touched:true},
+        {id:'g1_1_demo02',round:1,teamA:['demo_garcia','demo_rakshith'],teamB:['demo_michaeld','demo_nontas'],scoreA:3,scoreB:2,confirmed:true,overtime:false,touched:true},
+        {id:'g1_2_demo03',round:1,teamA:['demo_garcia','demo_nontas'],teamB:['demo_michaeld','demo_rakshith'],scoreA:0,scoreB:3,confirmed:true,overtime:false,touched:true},
+        {id:'g2_0_demo04',round:2,teamA:['demo_nontas','demo_rakshith'],teamB:['demo_garcia','demo_michaeld'],scoreA:6,scoreB:2,confirmed:true,overtime:true,touched:true},
+        {id:'g2_1_demo05',round:2,teamA:['demo_michaeld','demo_rakshith'],teamB:['demo_garcia','demo_nontas'],scoreA:0,scoreB:0,confirmed:false,overtime:false,touched:false},
+        {id:'g2_2_demo06',round:2,teamA:['demo_michaeld','demo_nontas'],teamB:['demo_garcia','demo_rakshith'],scoreA:0,scoreB:0,confirmed:false,overtime:false,touched:false},
+      ],
+    },
+  },
+];
 
 /* ════════════════════════════════════════
    HELPERS
@@ -2461,7 +2540,42 @@ function renderHistoryList(){
 /* ════════════════════════════════════════
    SETUP RENDER
 ════════════════════════════════════════ */
+function renderDemoTournaments(){
+  const panel=document.getElementById('demo-panel');
+  const list=document.getElementById('demo-list');
+  if(!DEMO_TOURNAMENTS.length){panel.style.display='none';return;}
+  panel.style.display='';
+  list.innerHTML=DEMO_TOURNAMENTS.map(d=>`
+    <button class="demo-card" data-demo="${d.id}">
+      <div>
+        <div class="demo-card-title">${d.title}</div>
+        <div class="demo-card-flags">${d.players.map(p=>`<img src="${flagSrc(p.code)}" alt="" onerror="this.style.opacity='0'"/>`).join('')}</div>
+        <div class="demo-card-meta">${d.meta}</div>
+      </div>
+      <div class="demo-card-winner">&#127942; ${d.winnerName}</div>
+    </button>
+  `).join('');
+}
+
+function loadDemoTournament(demoId){
+  const demo=DEMO_TOURNAMENTS.find(d=>d.id===demoId);
+  if(!demo)return;
+  Object.keys(STATE).forEach(k=>delete STATE[k]);
+  Object.assign(STATE,JSON.parse(JSON.stringify(demo.state)));
+  currentSaveKey=null;
+  showScreen('tournament');
+  renderSchedule();
+  renderStandings();
+  renderStats();
+}
+
+document.getElementById('demo-list').addEventListener('click',e=>{
+  const card=e.target.closest('.demo-card');
+  if(card)loadDemoTournament(card.dataset.demo);
+});
+
 function renderSetup(){
+  renderDemoTournaments();
   const list=document.getElementById('player-list');
   list.innerHTML='';
   STATE.players.forEach((p,i)=>{
