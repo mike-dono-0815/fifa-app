@@ -1536,16 +1536,26 @@ const STATE = {
   createdAt: null,
 };
 let currentSaveKey = null;
+// Set when the live tournament was loaded from the finished-tournaments list,
+// so ending it via "New Tournament" doesn't re-archive an unmodified copy.
+let loadedFinishedId = null;
 
 /* ════════════════════════════════════════
-   DEMO TOURNAMENTS
+   FINISHED TOURNAMENTS
 ════════════════════════════════════════ */
-const DEMO_TOURNAMENTS = [
+const FINISHED_KEY = 'fc2026_finished';
+const MAX_FINISHED = 30;
+
+// One real tournament (reconstructed from FC2026_Tournament.pdf) used to seed
+// the list the first time it's ever read, so the feature isn't empty out of
+// the box. After that, only actually-finished tournaments get added.
+const SEED_FINISHED_TOURNAMENTS = [
   {
     id:'demo_garcia_goodbye',
     title:'Garcia · MichaelD · Nontas · Rakshith',
-    meta:'4 Players · Round 2 · 4/6 games played',
+    meta:'4 Players · Round 2 · 4 games played',
     winnerName:'Rakshith',
+    savedAt:1745740000000,
     players:[
       {name:'Garcia',code:'co'},{name:'MichaelD',code:'at'},
       {name:'Nontas',code:'gr'},{name:'Rakshith',code:'in'},
@@ -1570,6 +1580,39 @@ const DEMO_TOURNAMENTS = [
     },
   },
 ];
+
+function getFinishedTournaments(){
+  try{
+    const raw=localStorage.getItem(FINISHED_KEY);
+    if(raw===null){
+      // First run on this browser: seed with the example, then persist it.
+      putFinishedTournaments(SEED_FINISHED_TOURNAMENTS);
+      return SEED_FINISHED_TOURNAMENTS;
+    }
+    return JSON.parse(raw)||[];
+  }catch{return[];}
+}
+function putFinishedTournaments(list){try{localStorage.setItem(FINISHED_KEY,JSON.stringify(list));}catch(_){}}
+
+function archiveFinishedTournament(){
+  if(!STATE.players.length||!STATE.games.some(g=>g.confirmed))return;
+  if(loadedFinishedId)return; // just viewing/continuing an already-archived one, not a new result
+  const standings=computeStandings();
+  const winner=standings[0];
+  const record={
+    id:`ft_${Date.now()}_${uid()}`,
+    title:STATE.players.map(p=>p.name||'Player').join(' · '),
+    meta:`${STATE.players.length} Players · Round ${STATE.currentRound} · ${STATE.games.filter(g=>g.confirmed).length} games played`,
+    winnerName:winner?playerName(winner.id):'—',
+    savedAt:Date.now(),
+    players:STATE.players.map(p=>({name:p.name,code:p.countryCode})),
+    state:JSON.parse(JSON.stringify(STATE)),
+  };
+  const list=getFinishedTournaments();
+  list.unshift(record);
+  if(list.length>MAX_FINISHED)list.length=MAX_FINISHED;
+  putFinishedTournaments(list);
+}
 
 /* ════════════════════════════════════════
    HELPERS
@@ -2543,9 +2586,10 @@ function renderHistoryList(){
 function renderDemoTournaments(){
   const panel=document.getElementById('demo-panel');
   const list=document.getElementById('demo-list');
-  if(!DEMO_TOURNAMENTS.length){panel.style.display='none';return;}
+  const finished=getFinishedTournaments();
+  if(!finished.length){panel.style.display='none';return;}
   panel.style.display='';
-  list.innerHTML=DEMO_TOURNAMENTS.map(d=>`
+  list.innerHTML=finished.map(d=>`
     <button class="demo-card" data-demo="${d.id}">
       <div>
         <div class="demo-card-title">${d.title}</div>
@@ -2558,11 +2602,12 @@ function renderDemoTournaments(){
 }
 
 function loadDemoTournament(demoId){
-  const demo=DEMO_TOURNAMENTS.find(d=>d.id===demoId);
+  const demo=getFinishedTournaments().find(d=>d.id===demoId);
   if(!demo)return;
   Object.keys(STATE).forEach(k=>delete STATE[k]);
   Object.assign(STATE,JSON.parse(JSON.stringify(demo.state)));
   currentSaveKey=null;
+  loadedFinishedId=demoId;
   showScreen('tournament');
   renderSchedule();
   renderStandings();
@@ -2847,6 +2892,7 @@ document.getElementById('btn-generate').addEventListener('click',()=>{
   STATE.games=generateSchedule(1);
   STATE.currentRound=1;
   STATE.createdAt=Date.now();
+  loadedFinishedId=null;
   showScreen('draw');
   runDrawScreen(STATE.players,()=>{
     showScreen('tournament');
@@ -2899,8 +2945,10 @@ document.getElementById('btn-pdf').addEventListener('click',()=>window.print());
 // New tournament
 document.getElementById('btn-new-tournament').addEventListener('click',()=>{
   if(!confirm('Start a new tournament? All current progress will be lost.'))return;
+  archiveFinishedTournament();
   STATE.players=[];STATE.games=[];STATE.currentRound=1;STATE.createdAt=null;
   currentSaveKey=null;
+  loadedFinishedId=null;
   showScreen('setup');
   STATE.players=[
     {id:uid(),name:'',countryCode:'',countryName:''},
