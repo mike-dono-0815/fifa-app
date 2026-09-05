@@ -1546,36 +1546,50 @@ let loadedFinishedId = null;
 const FINISHED_KEY = 'fc2026_finished';
 const MAX_FINISHED = 30;
 
-// One real tournament (reconstructed from FC2026_Tournament.pdf) used to seed
-// the list the first time it's ever read, so the feature isn't empty out of
-// the box. After that, only actually-finished tournaments get added.
+// Ids of seed entries from earlier app versions that should be dropped from
+// any browser that already persisted them (see RETIRED_SEED_IDS below).
+const RETIRED_SEED_IDS = ['demo_garcia_goodbye'];
+
+// One real tournament (reconstructed from FC2026_Tournament_01.pdf) used to
+// seed the list the first time it's ever read, so the feature isn't empty
+// out of the box. After that, only actually-finished tournaments get added.
 const SEED_FINISHED_TOURNAMENTS = [
   {
-    id:'demo_garcia_goodbye',
-    title:'Garcia · MichaelD · Nontas · Rakshith',
-    meta:'4 Players · Round 2 · 4 games played',
-    winnerName:'Rakshith',
-    savedAt:1745740000000,
+    id:'demo_nontas_champion',
+    title:'Ricky · Alldad · MichaelD · Erhan · Nontas',
+    meta:'5 Players · Round 1 · 15 games played',
+    winnerName:'Nontas',
+    savedAt:1745900000000,
     players:[
-      {name:'Garcia',code:'co'},{name:'MichaelD',code:'at'},
-      {name:'Nontas',code:'gr'},{name:'Rakshith',code:'in'},
+      {name:'Ricky',code:'in'},{name:'Alldad',code:'co'},{name:'MichaelD',code:'at'},
+      {name:'Erhan',code:'tr'},{name:'Nontas',code:'gr'},
     ],
     state:{
-      currentRound:2,
-      createdAt:1745740000000,
+      currentRound:1,
+      createdAt:1745900000000,
       players:[
-        {id:'demo_garcia',name:'Garcia',countryCode:'co',countryName:'Colombia'},
+        {id:'demo_ricky',name:'Ricky',countryCode:'in',countryName:'India'},
+        {id:'demo_alldad',name:'Alldad',countryCode:'co',countryName:'Colombia'},
         {id:'demo_michaeld',name:'MichaelD',countryCode:'at',countryName:'Austria'},
+        {id:'demo_erhan',name:'Erhan',countryCode:'tr',countryName:'Turkey'},
         {id:'demo_nontas',name:'Nontas',countryCode:'gr',countryName:'Greece'},
-        {id:'demo_rakshith',name:'Rakshith',countryCode:'in',countryName:'India'},
       ],
       games:[
-        {id:'g1_0_demo01',round:1,teamA:['demo_nontas','demo_rakshith'],teamB:['demo_garcia','demo_michaeld'],scoreA:1,scoreB:2,confirmed:true,overtime:false,touched:true},
-        {id:'g1_1_demo02',round:1,teamA:['demo_garcia','demo_rakshith'],teamB:['demo_michaeld','demo_nontas'],scoreA:3,scoreB:2,confirmed:true,overtime:false,touched:true},
-        {id:'g1_2_demo03',round:1,teamA:['demo_garcia','demo_nontas'],teamB:['demo_michaeld','demo_rakshith'],scoreA:0,scoreB:3,confirmed:true,overtime:false,touched:true},
-        {id:'g2_0_demo04',round:2,teamA:['demo_nontas','demo_rakshith'],teamB:['demo_garcia','demo_michaeld'],scoreA:6,scoreB:2,confirmed:true,overtime:true,touched:true},
-        {id:'g2_1_demo05',round:2,teamA:['demo_michaeld','demo_rakshith'],teamB:['demo_garcia','demo_nontas'],scoreA:0,scoreB:0,confirmed:false,overtime:false,touched:false},
-        {id:'g2_2_demo06',round:2,teamA:['demo_michaeld','demo_nontas'],teamB:['demo_garcia','demo_rakshith'],scoreA:0,scoreB:0,confirmed:false,overtime:false,touched:false},
+        {id:'g1_0_demo01',round:1,teamA:['demo_ricky','demo_alldad'],teamB:['demo_michaeld','demo_erhan'],scoreA:1,scoreB:0,confirmed:true,overtime:false,touched:true},
+        {id:'g1_1_demo02',round:1,teamA:['demo_alldad','demo_erhan'],teamB:['demo_ricky','demo_nontas'],scoreA:1,scoreB:6,confirmed:true,overtime:false,touched:true},
+        {id:'g1_2_demo03',round:1,teamA:['demo_ricky','demo_nontas'],teamB:['demo_michaeld','demo_alldad'],scoreA:2,scoreB:0,confirmed:true,overtime:true,touched:true},
+        {id:'g1_3_demo04',round:1,teamA:['demo_michaeld','demo_alldad'],teamB:['demo_nontas','demo_erhan'],scoreA:1,scoreB:1,confirmed:true,overtime:true,touched:true},
+        {id:'g1_4_demo05',round:1,teamA:['demo_ricky','demo_michaeld'],teamB:['demo_nontas','demo_erhan'],scoreA:2,scoreB:2,confirmed:true,overtime:true,touched:true},
+        {id:'g1_5_demo06',round:1,teamA:['demo_ricky','demo_michaeld'],teamB:['demo_alldad','demo_erhan'],scoreA:1,scoreB:0,confirmed:true,overtime:false,touched:true},
+        {id:'g1_6_demo07',round:1,teamA:['demo_nontas','demo_alldad'],teamB:['demo_ricky','demo_erhan'],scoreA:2,scoreB:3,confirmed:true,overtime:true,touched:true},
+        {id:'g1_7_demo08',round:1,teamA:['demo_nontas','demo_alldad'],teamB:['demo_ricky','demo_michaeld'],scoreA:3,scoreB:0,confirmed:true,overtime:false,touched:true},
+        {id:'g1_8_demo09',round:1,teamA:['demo_nontas','demo_alldad'],teamB:['demo_michaeld','demo_erhan'],scoreA:0,scoreB:1,confirmed:true,overtime:false,touched:true},
+        {id:'g1_9_demo10',round:1,teamA:['demo_nontas','demo_michaeld'],teamB:['demo_ricky','demo_erhan'],scoreA:6,scoreB:3,confirmed:true,overtime:true,touched:true},
+        {id:'g1_10_demo11',round:1,teamA:['demo_michaeld','demo_alldad'],teamB:['demo_ricky','demo_erhan'],scoreA:5,scoreB:4,confirmed:true,overtime:true,touched:true},
+        {id:'g1_11_demo12',round:1,teamA:['demo_nontas','demo_erhan'],teamB:['demo_ricky','demo_alldad'],scoreA:0,scoreB:2,confirmed:true,overtime:false,touched:true},
+        {id:'g1_12_demo13',round:1,teamA:['demo_ricky','demo_alldad'],teamB:['demo_nontas','demo_michaeld'],scoreA:3,scoreB:5,confirmed:true,overtime:false,touched:true},
+        {id:'g1_13_demo14',round:1,teamA:['demo_alldad','demo_erhan'],teamB:['demo_nontas','demo_michaeld'],scoreA:1,scoreB:6,confirmed:true,overtime:false,touched:true},
+        {id:'g1_14_demo15',round:1,teamA:['demo_michaeld','demo_erhan'],teamB:['demo_ricky','demo_nontas'],scoreA:1,scoreB:2,confirmed:true,overtime:false,touched:true},
       ],
     },
   },
@@ -1589,7 +1603,16 @@ function getFinishedTournaments(){
       putFinishedTournaments(SEED_FINISHED_TOURNAMENTS);
       return SEED_FINISHED_TOURNAMENTS;
     }
-    return JSON.parse(raw)||[];
+    let list=JSON.parse(raw)||[];
+    // Drop retired seed entries left over from an earlier app version, and
+    // backfill the corrected seed if nothing has replaced it yet.
+    const before=list.length;
+    list=list.filter(t=>!RETIRED_SEED_IDS.includes(t.id));
+    if(list.length!==before&&!list.some(t=>SEED_FINISHED_TOURNAMENTS.some(s=>s.id===t.id))){
+      list=[...SEED_FINISHED_TOURNAMENTS,...list];
+    }
+    if(list.length!==before)putFinishedTournaments(list);
+    return list;
   }catch{return[];}
 }
 function putFinishedTournaments(list){try{localStorage.setItem(FINISHED_KEY,JSON.stringify(list));}catch(_){}}
