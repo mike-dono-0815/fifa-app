@@ -697,21 +697,6 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   box-shadow:0 0 10px var(--green-glow);
 }
 .btn-final-scores:hover{background:var(--green-glow);box-shadow:0 0 20px var(--green-glow)}
-.btn-next-round{
-  font-family:'Barlow Condensed',sans-serif;
-  font-weight:800;
-  font-size:1.2rem;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  background:linear-gradient(135deg,var(--purple),var(--blue-neon));
-  color:#fff;
-  border-radius:var(--r-sm);
-  padding:14px 36px;
-  transition:opacity .2s,transform .1s;
-  box-shadow:0 0 24px var(--blue-glow);
-}
-.btn-next-round:hover{opacity:.9}
-.btn-next-round:active{transform:scale(.97)}
 
 /* ── Table tab ── */
 #tab-table{overflow-x:auto}
@@ -1414,7 +1399,6 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
     <!-- round blocks injected here -->
     <div class="next-round-wrap" id="next-round-wrap">
       <button class="btn-final-scores" id="btn-final-scores">Final Scores</button>
-      <button class="btn-next-round" id="btn-next-round">Start Round 2</button>
     </div>
   </div>
 
@@ -1564,6 +1548,7 @@ const SEED_FINISHED_TOURNAMENTS = [
     meta:'5 Players · Round 1 · 15 games played',
     winnerName:'Nontas',
     savedAt:1745900000000,
+    url:'https://mike-dono-0815.github.io/fifa-app/tour_29_04_2025',
     players:[
       {name:'Ricky',code:'in'},{name:'Alldad',code:'co'},{name:'MichaelD',code:'at'},
       {name:'Erhan',code:'tr'},{name:'Nontas',code:'gr'},
@@ -1622,8 +1607,8 @@ function getFinishedTournaments(){
 function putFinishedTournaments(list){try{localStorage.setItem(FINISHED_KEY,JSON.stringify(list));}catch(_){}}
 
 function archiveFinishedTournament(){
-  if(!STATE.players.length||!STATE.games.some(g=>g.confirmed))return;
-  if(loadedFinishedId)return; // just viewing/continuing an already-archived one, not a new result
+  if(!STATE.players.length||!STATE.games.some(g=>g.confirmed))return null;
+  if(loadedFinishedId)return null; // just viewing/continuing an already-archived one, not a new result
   const standings=computeStandings();
   const winner=standings[0];
   const record={
@@ -1639,6 +1624,7 @@ function archiveFinishedTournament(){
   list.unshift(record);
   if(list.length>MAX_FINISHED)list.length=MAX_FINISHED;
   putFinishedTournaments(list);
+  return record.id;
 }
 
 /* ════════════════════════════════════════
@@ -2433,14 +2419,6 @@ function buildRoundBlock(round){
   return block;
 }
 
-function appendRoundBlock(round){
-  const panel=document.getElementById('tab-schedule');
-  const nextWrap=document.getElementById('next-round-wrap');
-  const block=buildRoundBlock(round);
-  panel.insertBefore(block,nextWrap);
-  block.scrollIntoView({behavior:'smooth',block:'start'});
-}
-
 function updateRoundProgress(round){
   const block=document.querySelector(`.round-block[data-round="${round}"]`);
   if(!block)return;
@@ -2463,11 +2441,27 @@ function updateRoundProgress(round){
 ════════════════════════════════════════ */
 function checkRoundComplete(){
   const roundGames=STATE.games.filter(g=>g.round===STATE.currentRound);
-  const allDone=!loadedFinishedId&&roundGames.length>0&&roundGames.every(g=>g.confirmed);
+  const roundDone=roundGames.length>0&&roundGames.every(g=>g.confirmed);
+  if(roundDone&&!loadedFinishedId){
+    finishTournament();
+    return;
+  }
   const wrap=document.getElementById('next-round-wrap');
-  const btn=document.getElementById('btn-next-round');
-  wrap.className='next-round-wrap'+(allDone?' visible':'');
-  if(btn)btn.textContent=`Start Round ${STATE.currentRound+1}`;
+  wrap.className='next-round-wrap'+((roundDone&&!loadedFinishedId)?' visible':'');
+}
+
+// Once every game is played, the tournament is over: archive it into the
+// Finished Tournaments list, freeze it read-only, and clear the live slot so
+// a reload lands on setup rather than resurrecting it as editable. Starting
+// another round is no longer offered — a new tournament is a fresh one.
+function finishTournament(){
+  const newId=archiveFinishedTournament();
+  if(!newId)return;
+  loadedFinishedId=newId;
+  try{localStorage.removeItem(LIVE_KEY);}catch(_){}
+  renderSchedule();
+  renderStandings();
+  renderStats();
 }
 
 /* ════════════════════════════════════════
@@ -2528,6 +2522,7 @@ const SNAPSHOT_DEBOUNCE_MS = 800;
 let snapshotTimer = null;
 
 function saveState(triggerGameId){
+  if(loadedFinishedId)return; // frozen/archived tournament — nothing left to save
   try{localStorage.setItem(LIVE_KEY,JSON.stringify(STATE));}catch(_){}
   if(snapshotTimer)clearTimeout(snapshotTimer);
   // Coalesce rapid-fire edits to the same game (score clicks, OT toggle) into
@@ -2628,7 +2623,7 @@ function renderDemoTournaments(){
   if(!finished.length){panel.style.display='none';return;}
   panel.style.display='';
   list.innerHTML=finished.map(d=>`
-    <button class="demo-card" data-demo="${d.id}">
+    <button class="demo-card" data-demo="${d.id}"${d.url?` data-url="${d.url}"`:''}>
       <div>
         <div class="demo-card-title">${d.title}</div>
         <div class="demo-card-flags">${d.players.map(p=>`<img src="${flagSrc(p.code)}" alt="" onerror="this.style.opacity='0'"/>`).join('')}</div>
@@ -2654,7 +2649,9 @@ function loadDemoTournament(demoId){
 
 document.getElementById('demo-list').addEventListener('click',e=>{
   const card=e.target.closest('.demo-card');
-  if(card)loadDemoTournament(card.dataset.demo);
+  if(!card)return;
+  if(card.dataset.url){window.location.href=card.dataset.url;return;}
+  loadDemoTournament(card.dataset.demo);
 });
 
 function renderSetup(){
@@ -2965,17 +2962,6 @@ document.getElementById('screen-tournament').addEventListener('click',e=>{
 document.getElementById('btn-final-scores').addEventListener('click',()=>{
   switchTab('table');
   document.getElementById('tab-table').scrollIntoView({behavior:'smooth',block:'start'});
-});
-
-// Next round
-document.getElementById('btn-next-round').addEventListener('click',()=>{
-  if(loadedFinishedId)return;
-  STATE.currentRound++;
-  const newGames=generateSchedule(STATE.currentRound);
-  STATE.games.push(...newGames);
-  appendRoundBlock(STATE.currentRound);
-  checkRoundComplete();
-  saveState();
 });
 
 // PDF export
