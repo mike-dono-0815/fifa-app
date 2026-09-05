@@ -698,6 +698,28 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
 }
 .btn-final-scores:hover{background:var(--green-glow);box-shadow:0 0 20px var(--green-glow)}
 
+/* Lock in final score (appears below the last game of the round) */
+.btn-lock-final{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:800;
+  font-size:1rem;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--gold);
+  background:transparent;
+  border:2px solid var(--gold);
+  border-radius:var(--r);
+  padding:12px 32px;
+  display:block;
+  margin:18px auto 4px;
+  transition:all .2s;
+  box-shadow:0 0 10px var(--gold-glow);
+  cursor:pointer;
+}
+.btn-lock-final::before{content:'🔒 '}
+.btn-lock-final:hover{background:var(--gold-glow);box-shadow:0 0 20px var(--gold-glow)}
+@media print{.btn-lock-final{display:none}}
+
 /* ── Table tab ── */
 #tab-table{overflow-x:auto}
 .standings-table{
@@ -2471,12 +2493,53 @@ function updateRoundProgress(round){
 function checkRoundComplete(){
   const roundGames=STATE.games.filter(g=>g.round===STATE.currentRound);
   const roundDone=roundGames.length>0&&roundGames.every(g=>g.confirmed);
-  if(roundDone&&!loadedFinishedId){
-    finishTournament();
-    return;
-  }
   const wrap=document.getElementById('next-round-wrap');
   wrap.className='next-round-wrap'+((roundDone&&!loadedFinishedId)?' visible':'');
+  refreshLockButton();
+}
+
+// The last game of the round is "live" (still editable) once every game
+// before it has been confirmed. While it is live we do NOT auto-finish the
+// tournament on a score click — the player locks the result in deliberately
+// via the "Lock in Final Score" button, so they can still adjust the score.
+function lastGameLive(){
+  if(loadedFinishedId)return false;
+  const roundGames=STATE.games.filter(g=>g.round===STATE.currentRound);
+  if(roundGames.length===0)return false;
+  return roundGames.slice(0,-1).every(g=>g.confirmed);
+}
+
+function refreshLockButton(){
+  const block=document.querySelector(`.round-block[data-round="${STATE.currentRound}"]`);
+  if(!block)return;
+  let btn=block.querySelector('.btn-lock-final');
+  if(lastGameLive()){
+    if(!btn){
+      btn=document.createElement('button');
+      btn.className='btn-lock-final';
+      btn.textContent='Lock in Final Score';
+      block.appendChild(btn);
+    }
+  }else if(btn){
+    btn.remove();
+  }
+}
+
+function handleLockFinal(){
+  if(loadedFinishedId)return;
+  const roundGames=STATE.games.filter(g=>g.round===STATE.currentRound);
+  const last=roundGames[roundGames.length-1];
+  if(last&&!last.confirmed){
+    last.confirmed=true;
+    last.touched=true;
+    updateGameRow(last.id);
+    updateRoundProgress(last.round);
+    updateRoundLocks(last.round);
+    renderStandings();
+    renderStats();
+    saveState(last.id);
+  }
+  if(roundGames.length>0&&roundGames.every(g=>g.confirmed))finishTournament();
 }
 
 // Once every game is played, the tournament is over: archive it into the
@@ -2985,6 +3048,9 @@ document.getElementById('screen-tournament').addEventListener('click',e=>{
   // Zero confirm via s-sep
   const sep=e.target.closest('.s-sep.confirmmable');
   if(sep){handleConfirmZero(sep.dataset.game);return;}
+  // Lock in the final score → finish the tournament
+  const lockBtn=e.target.closest('.btn-lock-final');
+  if(lockBtn){handleLockFinal();return;}
 });
 
 // Final scores → table tab
