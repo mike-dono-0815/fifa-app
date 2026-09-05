@@ -1770,7 +1770,7 @@ function computeStats(){
   const ps={};
   STATE.players.forEach(p=>{
     ps[p.id]={id:p.id,gp:0,w:0,d:0,l:0,gf:0,ga:0,pts:0,cleanSheets:0,
-              bestSingleGF:0,bestSingleGA:0,bestWinDiff:0,worstLossDiff:0,
+              bestSingleGF:0,bestSingleGA:0,bestWinDiff:0,worstLossDiff:0,narrowWins:0,
               gameResults:[],otGP:0,otW:0,otL:0,otD:0};
   });
   confirmed.forEach(g=>{
@@ -1779,9 +1779,12 @@ function computeStats(){
       team.forEach(pid=>{
         const r=ps[pid];
         r.gp++;r.gf+=mineScore;r.ga+=theirScore;
-        if(mineScore===0)r.bestSingleGA=Math.max(r.bestSingleGA,theirScore);
+        r.bestSingleGA=Math.max(r.bestSingleGA,theirScore);
         r.bestSingleGF=Math.max(r.bestSingleGF,mineScore);
-        if(mineScore>theirScore){r.w++;r.pts+=3;r.bestWinDiff=Math.max(r.bestWinDiff,mineScore-theirScore);r.gameResults.push('W');}
+        if(mineScore>theirScore){
+          r.w++;r.pts+=3;r.bestWinDiff=Math.max(r.bestWinDiff,mineScore-theirScore);r.gameResults.push('W');
+          if(mineScore-theirScore===1)r.narrowWins++;
+        }
         else if(mineScore===theirScore){r.d++;r.pts+=1;r.gameResults.push('D');}
         else{r.l++;r.worstLossDiff=Math.max(r.worstLossDiff,theirScore-mineScore);r.gameResults.push('L');}
         if(theirScore===0)r.cleanSheets++;
@@ -1801,7 +1804,7 @@ function computeStats(){
   const streaks={};
   STATE.players.forEach(p=>{
     const results=ps[p.id].gameResults;
-    let cur=0,curType='',longestW=0,longestUnbeaten=0,curUnbeaten=0;
+    let cur=0,curType='',longestW=0,longestL=0,longestUnbeaten=0,curUnbeaten=0;
     results.forEach(r=>{
       if(r==='W'){
         cur=(curType==='W'?cur:0)+1;curType='W';curUnbeaten++;
@@ -1811,9 +1814,10 @@ function computeStats(){
         cur=(curType==='L'?cur:0)+1;curType='L';curUnbeaten=0;
       }
       if(curType==='W')longestW=Math.max(longestW,cur);
+      if(curType==='L')longestL=Math.max(longestL,cur);
       longestUnbeaten=Math.max(longestUnbeaten,curUnbeaten);
     });
-    streaks[p.id]={current:cur,type:curType,longestW,longestUnbeaten};
+    streaks[p.id]={current:cur,type:curType,longestW,longestL,longestUnbeaten};
   });
 
   // Partnerships
@@ -1853,6 +1857,16 @@ function computeStats(){
   // OT overview
   const otGames=confirmed.filter(g=>g.overtime);
 
+  // Biggest rivalry: the pair who've faced off as opponents the most
+  let rivalry=null,rivalryTotal=0;
+  Object.entries(h2h).forEach(([k,rec])=>{
+    const [idA,idB]=k.split('|');
+    const rA=rec[`${idA}_vs_${idB}`];
+    if(!rA)return;
+    const total=rA.w+rA.d+rA.l;
+    if(total>rivalryTotal){rivalryTotal=total;rivalry={idA,idB,...rA};}
+  });
+
   // Awards
   const pArr=Object.values(ps).filter(p=>p.gp>0);
   function best(arr,fn){if(!arr.length)return null;return arr.reduce((b,c)=>fn(c)>fn(b)?c:b);}
@@ -1867,6 +1881,8 @@ function computeStats(){
     goalMachine:minGP3.length?best(minGP3,p=>p.gf/p.gp):null,
     unbreakable:best(pArr,p=>streaks[p.id].longestUnbeaten),
     punchingBag:best(pArr,p=>p.l),
+    kingOfDraws:best(pArr,p=>p.d),
+    ironMan:best(pArr,p=>p.gp),
     clutchPlayer:null,bottler:null,otMagnet:null,
   };
   if(otGames.length>=2){
@@ -1879,7 +1895,7 @@ function computeStats(){
   }
 
   return{
-    overview:{N,totalGoals,avgGoals,topScoreline,topScorelineCount,highestGame,biggestWin,
+    overview:{N,totalGoals,avgGoals,topScoreline,topScorelineCount,highestGame,biggestWin,rivalry,rivalryTotal,
               draws:confirmed.filter(g=>g.scoreA===g.scoreB).length},
     ps,streaks,partners,h2h,awards,otGames,
   };
@@ -2030,6 +2046,8 @@ function renderTableExtras(){
         ${awardCard('💎','Unbreakable',awards.unbreakable?.id,awards.unbreakable?`${streaks[awards.unbreakable.id].longestUnbeaten}-game unbeaten streak`:'')}
         ${awardCard('😬','Liability',awards.liability?.id,`${awards.liability?awards.liability.ga:0} goals conceded`,'red-award')}
         ${awardCard('😓','Punching Bag',awards.punchingBag?.id,`${awards.punchingBag?awards.punchingBag.l:0} losses`,'red-award')}
+        ${awards.kingOfDraws&&awards.kingOfDraws.d>0?awardCard('🤝','King of Draws',awards.kingOfDraws.id,`${awards.kingOfDraws.d} draws`,''):''}
+        ${awards.ironMan?awardCard('🦾','Iron Man',awards.ironMan.id,`${awards.ironMan.gp} games played`,'blue-award'):''}
         ${otGames.length>=2&&awards.clutchPlayer?awardCard('⚡','Clutch Player',awards.clutchPlayer?.id,`${Math.round(awards.clutchPlayer.otW/awards.clutchPlayer.otGP*100)}% OT win rate`,'purple-award'):''}
         ${otGames.length>=2&&awards.bottler?awardCard('🫣','Bottler',awards.bottler?.id,`${Math.round(awards.bottler.otW/awards.bottler.otGP*100)}% OT win rate`,'red-award'):''}
         ${otGames.length>=1&&awards.otMagnet?awardCard('🕐','OT Magnet',awards.otMagnet?.id,`${awards.otMagnet?awards.otMagnet.otGP:0} OT games`,'purple-award'):''}
@@ -2220,6 +2238,7 @@ function renderStats(){
       ${leaderboard('Most Goals Conceded',pList,p=>p.ga,null)}
       ${leaderboard('Fewest GA per Game (min 3 games)',pList.filter(p=>p.gp>=3),p=>-(p.gp?p.ga/p.gp:99),p=>+(p.ga/p.gp).toFixed(2),false)}
       ${leaderboard('Most Clean Sheets',pList,p=>p.cleanSheets,null)}
+      ${leaderboard('Most Goals Conceded in One Game',pList,p=>p.bestSingleGA,null)}
     </div>
   </div>
 
@@ -2231,8 +2250,12 @@ function renderStats(){
       ${leaderboard('Most Wins',pList,p=>p.w,null)}
       ${leaderboard('Best Goal Difference',pList,p=>p.gf-p.ga,p=>{ const v=p.gf-p.ga; return(v>0?'+':'')+v;})}
       ${leaderboard('Most Points',pList,p=>p.pts,null)}
+      ${leaderboard('Points per Game (min 3 games)',pList.filter(p=>p.gp>=3),p=>+(p.pts/p.gp).toFixed(2),fmtDec1)}
       ${leaderboard('Biggest Single Win',pList,p=>p.bestWinDiff,p=>'+'+(p.bestWinDiff))}
       ${leaderboard('Worst Single Defeat',pList,p=>p.worstLossDiff,p=>'-'+(p.worstLossDiff))}
+      ${leaderboard('Most Narrow Wins (1-goal margin)',pList,p=>p.narrowWins,null)}
+      ${leaderboard('Most Draws',pList,p=>p.d,null)}
+      ${leaderboard('Most Games Played',pList,p=>p.gp,null)}
     </div>
   </div>
 
@@ -2241,6 +2264,7 @@ function renderStats(){
     <div class="stats-section-title">Streaks &amp; Form</div>
     <div class="lb-grid">
       ${leaderboard('Longest Winning Streak Ever',streakData,p=>p.longestW,null)}
+      ${leaderboard('Longest Losing Streak Ever',streakData,p=>p.longestL,null)}
       ${leaderboard('Longest Unbeaten Streak Ever',streakData,p=>p.longestUnbeaten,null)}
     </div>
     <div class="leaderboard" style="margin-top:12px">
@@ -2277,6 +2301,9 @@ function renderStats(){
   <div class="stats-section">
     <div class="stats-section-title">Head-to-Head — Who Beats Who?</div>
     <div style="color:var(--text-muted);font-size:.8rem;margin-bottom:12px">W–D–L when facing each other (regardless of partners)</div>
+    ${overview.rivalry?`<div class="card-grid" style="margin-bottom:16px">
+      <div class="stat-card" style="grid-column:span 2"><div class="stat-card-val" style="font-size:1.1rem">${playerName(overview.rivalry.idA)} vs ${playerName(overview.rivalry.idB)} (${overview.rivalry.w}-${overview.rivalry.d}-${overview.rivalry.l})</div><div class="stat-card-label">Biggest Rivalry — ${overview.rivalryTotal} meetings</div></div>
+    </div>`:''}
     ${h2hMatrix()}
   </div>
 
@@ -2294,6 +2321,8 @@ function renderStats(){
       ${awardCard('💎','Unbreakable',awards.unbreakable?.id,awards.unbreakable?`${streaks[awards.unbreakable.id].longestUnbeaten}-game unbeaten streak`:'')}
       ${awardCard('😬','Liability',awards.liability?.id,`${awards.liability?awards.liability.ga:0} goals conceded`,'red-award')}
       ${awardCard('😓','Punching Bag',awards.punchingBag?.id,`${awards.punchingBag?awards.punchingBag.l:0} losses`,'red-award')}
+      ${awards.kingOfDraws&&awards.kingOfDraws.d>0?awardCard('🤝','King of Draws',awards.kingOfDraws.id,`${awards.kingOfDraws.d} draws`,''):''}
+      ${awards.ironMan?awardCard('🦾','Iron Man',awards.ironMan.id,`${awards.ironMan.gp} games played`,'blue-award'):''}
       ${otGames.length>=2&&awards.clutchPlayer?awardCard('⚡','Clutch Player',awards.clutchPlayer?.id,awards.clutchPlayer?`${Math.round(awards.clutchPlayer.otW/awards.clutchPlayer.otGP*100)}% OT win rate`:'','purple-award'):''}
       ${otGames.length>=2&&awards.bottler?awardCard('🫣','Bottler',awards.bottler?.id,awards.bottler?`${Math.round(awards.bottler.otW/awards.bottler.otGP*100)}% OT win rate`:'','red-award'):''}
       ${otGames.length>=1&&awards.otMagnet?awardCard('🕐','OT Magnet',awards.otMagnet?.id,`${awards.otMagnet?awards.otMagnet.otGP:0} OT games`,'purple-award'):''}
