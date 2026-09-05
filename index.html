@@ -2364,8 +2364,19 @@ function getSnapshots(){
 }
 function putSnapshots(snaps){try{localStorage.setItem(SNAPSHOTS_KEY,JSON.stringify(snaps));}catch(_){}}
 
+const SNAPSHOT_DEBOUNCE_MS = 800;
+let snapshotTimer = null;
+
 function saveState(triggerGameId){
   try{localStorage.setItem(LIVE_KEY,JSON.stringify(STATE));}catch(_){}
+  if(snapshotTimer)clearTimeout(snapshotTimer);
+  // Coalesce rapid-fire edits to the same game (score clicks, OT toggle) into
+  // a single snapshot once things settle, instead of one save per click.
+  snapshotTimer=setTimeout(commitSnapshot,triggerGameId?SNAPSHOT_DEBOUNCE_MS:0);
+}
+
+function commitSnapshot(){
+  snapshotTimer=null;
   // Build snapshot key
   const gamesPlayed=STATE.games.filter(g=>g.confirmed).length;
   const now=Date.now();
@@ -2387,6 +2398,15 @@ function saveState(triggerGameId){
   updateSaveBadge();
   if(document.getElementById('history-panel').classList.contains('open'))renderHistoryList();
 }
+
+// Flush a pending debounced snapshot immediately if the tab is closed or
+// backgrounded before it fires, so a save right before navigating away isn't lost.
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'&&snapshotTimer){clearTimeout(snapshotTimer);commitSnapshot();}
+});
+window.addEventListener('pagehide',()=>{
+  if(snapshotTimer){clearTimeout(snapshotTimer);commitSnapshot();}
+});
 
 function updateSaveBadge(){
   const badge=document.getElementById('save-badge');
