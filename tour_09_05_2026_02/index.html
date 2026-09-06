@@ -2629,7 +2629,7 @@ function renderHistoryList(){
    SETUP RENDER
 ════════════════════════════════════════ */
 function loadDemoTournament(demoId){
-  const demo=getFinishedTournaments().find(d=>d.id===demoId);
+  const demo=SEED_FINISHED_TOURNAMENTS.find(d=>d.id===demoId)||getFinishedTournaments().find(d=>d.id===demoId);
   if(!demo)return;
   Object.keys(STATE).forEach(k=>delete STATE[k]);
   Object.assign(STATE,JSON.parse(JSON.stringify(demo.state)));

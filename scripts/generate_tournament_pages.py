@@ -311,6 +311,13 @@ def patch_tour(src, seed_js, entry, t):
         <button class="btn-pdf" id="btn-pdf">&#128196; PDF</button>
       </div>''',
     )
+    # a permalink page must always resolve its own embedded tournament,
+    # regardless of any stale fc2026_finished list in the visitor's browser
+    src = src.replace(
+        "  const demo=getFinishedTournaments().find(d=>d.id===demoId);",
+        "  const demo=SEED_FINISHED_TOURNAMENTS.find(d=>d.id===demoId)"
+        "||getFinishedTournaments().find(d=>d.id===demoId);",
+    )
     # asset paths -> absolute
     src = src.replace('src="trophy_fa.png"', 'src="/fifa-app/trophy_fa.png"')
     src = src.replace(
@@ -505,6 +512,7 @@ def main():
         entry = next(e for e in entries if e["id"] == t["slug"])
         page = patch_tour(main_src, seed_js, entry, t)
         assert f"loadDemoTournament({t['slug']!r})" in page
+        assert "SEED_FINISHED_TOURNAMENTS.find(d=>d.id===demoId)" in page
         assert '<button class="btn-new-tournament"' not in page
         assert '<button class="btn-history"' not in page
         assert "getElementById('btn-new-tournament')" not in page
