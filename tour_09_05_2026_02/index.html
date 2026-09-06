@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FC 2026 Tournament – Garcia Goodbye</title>
+<title>FC 2026 Tournament – 9 May 2026 (II)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,800;1,900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -1360,7 +1360,7 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
      DRAW SCREEN
 ══════════════════════════════ -->
 <section id="screen-draw" class="screen">
-  <img class="draw-trophy" src="trophy_fa.png" alt="Trophy"/>
+  <img class="draw-trophy" src="/fifa-app/trophy_fa.png" alt="Trophy"/>
   <div class="draw-title">Drawing the Schedule</div>
   <div class="draw-drum-wrap">
     <div class="draw-drum" id="draw-drum"></div>
@@ -1404,13 +1404,10 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
 <section id="screen-tournament" class="screen">
   <div class="tourney-header">
     <div class="tourney-header-top">
-      <h1 class="tourney-title">FC 2026 &mdash; Garcia Goodbye</h1>
+      <h1 class="tourney-title">FC 2026 &mdash; 9 May 2026 (II)</h1>
       <div class="header-actions">
-        <button class="btn-history" id="btn-history">
-          &#9202; Saves <span class="save-badge" id="save-badge">0</span>
-        </button>
+        <a class="btn-pdf" href="/fifa-app/alltournaments/">&#8592; All Tournaments</a>
         <button class="btn-pdf" id="btn-pdf">&#128196; PDF</button>
-        <button class="btn-new-tournament" id="btn-new-tournament">New Tournament</button>
       </div>
     </div>
     <div class="tab-bar">
@@ -1620,7 +1617,7 @@ function archiveFinishedTournament(){
    HELPERS
 ════════════════════════════════════════ */
 const BLANK_IMG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQAABjE+ibYAAAAASUVORK5CYII=';
-function flagSrc(code){return code?`w320/${code.toLowerCase()}.png`:BLANK_IMG;}
+function flagSrc(code){return code?`/fifa-app/w320/${code.toLowerCase()}.png`:BLANK_IMG;}
 function playerById(id){return STATE.players.find(p=>p.id===id)||{};}
 function playerName(id){return playerById(id).name||'?';}
 function pairKey(a,b){return [a,b].sort().join('|');}
@@ -1914,7 +1911,7 @@ function renderStandings(){
         </div>
         <div class="podium-slot">
           <div class="podium-player">
-            <img class="trophy-img" src="trophy_fa.png" alt=""/>
+            <img class="trophy-img" src="/fifa-app/trophy_fa.png" alt=""/>
             <img class="podium-flag" src="${flagSrc(p1.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
             <span class="podium-name gold-name">${p1.name}</span>
             <span class="podium-pts">${r1.pts} pts</span>
@@ -3029,26 +3026,7 @@ document.getElementById('btn-final-scores').addEventListener('click',()=>{
 // PDF export
 document.getElementById('btn-pdf').addEventListener('click',()=>window.print());
 
-// New tournament
-document.getElementById('btn-new-tournament').addEventListener('click',()=>{
-  if(!confirm('Start a new tournament? All current progress will be lost.'))return;
-  archiveFinishedTournament();
-  STATE.players=[];STATE.games=[];STATE.currentRound=1;STATE.createdAt=null;
-  currentSaveKey=null;
-  loadedFinishedId=null;
-  showScreen('setup');
-  STATE.players=[
-    {id:uid(),name:'',countryCode:'',countryName:''},
-    {id:uid(),name:'',countryCode:'',countryName:''},
-    {id:uid(),name:'',countryCode:'',countryName:''},
-    {id:uid(),name:'',countryCode:'',countryName:''},
-    {id:uid(),name:'',countryCode:'',countryName:''},
-  ];
-  renderSetup();
-});
-
-// History panel
-document.getElementById('btn-history').addEventListener('click',openHistory);
+// New Tournament / Saves buttons are not shown on this permalink page.
 document.getElementById('btn-close-history').addEventListener('click',closeHistory);
 document.getElementById('history-overlay').addEventListener('click',closeHistory);
 function clearAllSaves(){
@@ -3072,32 +3050,7 @@ document.getElementById('history-list').addEventListener('click',e=>{
 ════════════════════════════════════════ */
 (function init(){
   updateSaveBadge();
-  try{
-    const live=localStorage.getItem(LIVE_KEY);
-    if(live){
-      const saved=JSON.parse(live);
-      if(saved.players&&saved.players.length&&saved.games&&saved.games.length){
-        Object.assign(STATE,saved);
-        showScreen('tournament');
-        renderSchedule();
-        renderStandings();
-        renderStats();
-        // restore currentSaveKey
-        const snaps=getSnapshots();
-        if(snaps.length)currentSaveKey=snaps[0].key;
-        return;
-      }
-    }
-  }catch(e){try{localStorage.removeItem(LIVE_KEY);}catch(_){}}
-  // Fresh start
-  STATE.players=[
-    {id:uid(),name:'',countryCode:'',countryName:''},
-    {id:uid(),name:'',countryCode:'',countryName:''},
-    {id:uid(),name:'',countryCode:'',countryName:''},
-    {id:uid(),name:'',countryCode:'',countryName:''},
-    {id:uid(),name:'',countryCode:'',countryName:''},
-  ];
-  renderSetup();
+  loadDemoTournament('09_05_2026_02');
 })();
 </script>
 </body>

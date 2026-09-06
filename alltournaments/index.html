@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FC Tournaments – All Results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+img{display:block}
+:root{
+  --bg-void:#080a0f;--bg-surface:#0f1318;--bg-raised:#161b23;
+  --green-bright:#00e676;--blue-neon:#00b4ff;--blue-glow:rgba(0,180,255,.15);
+  --purple:#a855f7;--gold:#ffd700;--silver:#c0c0c0;--bronze:#cd7f32;
+  --text-primary:#f0f4f8;--text-secondary:#7a9ab5;--text-muted:#3a5068;
+  --border-subtle:rgba(255,255,255,.06);--border-mid:rgba(255,255,255,.12);
+  --r:10px;--r-sm:6px;
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-void);color:var(--text-primary);min-height:100vh;padding:40px 20px 80px}
+.wrap{max-width:760px;margin:0 auto}
+.hero{text-align:center;margin-bottom:36px}
+.hero h1{
+  font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;
+  font-size:clamp(2.2rem,7vw,3.6rem);text-transform:uppercase;letter-spacing:.04em;line-height:1;
+  background:linear-gradient(135deg,#fff 0%,var(--blue-neon) 50%,var(--green-bright) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;
+}
+.hero .subtitle{color:var(--text-secondary);font-size:.85rem;letter-spacing:.12em;text-transform:uppercase}
+.hero a{display:inline-block;margin-top:16px;font-family:'Barlow Condensed',sans-serif;font-weight:700;
+  font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;color:var(--blue-neon);text-decoration:none;
+  border:1px solid var(--blue-neon);border-radius:var(--r-sm);padding:7px 16px;transition:background .2s}
+.hero a:hover{background:var(--blue-glow)}
+.tlist{display:flex;flex-direction:column;gap:14px}
+.tcard{
+  display:block;text-decoration:none;color:inherit;
+  background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--r);
+  padding:18px 20px;transition:border-color .2s,transform .1s,box-shadow .2s;
+}
+.tcard:hover{border-color:var(--blue-neon);box-shadow:0 0 22px var(--blue-glow)}
+.tcard:active{transform:scale(.995)}
+.tcard-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.tcard-date{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-style:italic;font-size:1.5rem;
+  text-transform:uppercase;letter-spacing:.03em}
+.tcard-meta{color:var(--text-muted);font-size:.8rem;letter-spacing:.04em}
+.tcard-flags{display:flex;gap:5px;margin-bottom:14px}
+.tcard-flags img{width:26px;height:18px;border-radius:2px;object-fit:cover;opacity:.9}
+.podium{display:flex;gap:10px;flex-wrap:wrap}
+.pod{display:flex;align-items:center;gap:7px;background:var(--bg-raised);border:1px solid var(--border-subtle);
+  border-radius:var(--r-sm);padding:6px 11px 6px 8px}
+.pod img{width:22px;height:15px;border-radius:2px;object-fit:cover}
+.pod-medal{font-size:.95rem}
+.pod-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;text-transform:uppercase;letter-spacing:.02em}
+.pod-pts{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;color:var(--text-secondary)}
+.pod-1{border-color:rgba(255,215,0,.35);box-shadow:inset 3px 0 12px rgba(255,215,0,.12)}
+.pod-1 .pod-name{color:var(--gold)}
+.pod-2 .pod-name{color:var(--silver)}
+.pod-3 .pod-name{color:var(--bronze)}
+.foot{margin-top:40px;text-align:center;color:var(--text-muted);font-size:.78rem}
+.foot a{color:var(--text-secondary)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>All Tournaments</h1>
+    <p class="subtitle">FC 2v2 &nbsp;·&nbsp; WC Edition</p>
+    <a href="/fifa-app/">&#8592; Back to the app</a>
+  </div>
+  <div class="tlist">
+    <a class="tcard" href="/fifa-app/tour_09_05_2026_02/">
+      <div class="tcard-top">
+        <span class="tcard-date">9 May 2026 (II)</span>
+        <span class="tcard-meta">5 players &middot; 15 games &middot; 1 round</span>
+      </div>
+      <div class="tcard-flags"><img src="/fifa-app/w320/de.png" alt="Germany" title="Ricky"/><img src="/fifa-app/w320/tr.png" alt="Turkey" title="Eehan"/><img src="/fifa-app/w320/co.png" alt="Colombia" title="Alldad"/><img src="/fifa-app/w320/gr.png" alt="Greece" title="Nontas"/><img src="/fifa-app/w320/at.png" alt="Austria" title="Michael"/></div>
+      <div class="podium"><div class="pod pod-1"><span class="pod-medal">&#129351;</span><img src="/fifa-app/w320/de.png" alt=""/><span class="pod-name">Ricky</span><span class="pod-pts">27 pts</span></div><div class="pod pod-2"><span class="pod-medal">&#129352;</span><img src="/fifa-app/w320/gr.png" alt=""/><span class="pod-name">Nontas</span><span class="pod-pts">24 pts</span></div><div class="pod pod-3"><span class="pod-medal">&#129353;</span><img src="/fifa-app/w320/co.png" alt=""/><span class="pod-name">Alldad</span><span class="pod-pts">18 pts</span></div></div>
+    </a>
+    <a class="tcard" href="/fifa-app/tour_09_05_2026/">
+      <div class="tcard-top">
+        <span class="tcard-date">9 May 2026</span>
+        <span class="tcard-meta">5 players &middot; 15 games &middot; 1 round</span>
+      </div>
+      <div class="tcard-flags"><img src="/fifa-app/w320/tr.png" alt="Turkey" title="Erhan"/><img src="/fifa-app/w320/de.png" alt="Germany" title="Ricky"/><img src="/fifa-app/w320/co.png" alt="Colombia" title="Aldad"/><img src="/fifa-app/w320/gr.png" alt="Greece" title="Nontas"/><img src="/fifa-app/w320/at.png" alt="Austria" title="Doni"/></div>
+      <div class="podium"><div class="pod pod-1"><span class="pod-medal">&#129351;</span><img src="/fifa-app/w320/de.png" alt=""/><span class="pod-name">Ricky</span><span class="pod-pts">22 pts</span></div><div class="pod pod-2"><span class="pod-medal">&#129352;</span><img src="/fifa-app/w320/gr.png" alt=""/><span class="pod-name">Nontas</span><span class="pod-pts">20 pts</span></div><div class="pod pod-3"><span class="pod-medal">&#129353;</span><img src="/fifa-app/w320/at.png" alt=""/><span class="pod-name">Doni</span><span class="pod-pts">20 pts</span></div></div>
+    </a>
+    <a class="tcard" href="/fifa-app/tour_06_05_2026/">
+      <div class="tcard-top">
+        <span class="tcard-date">6 May 2026</span>
+        <span class="tcard-meta">5 players &middot; 15 games &middot; 1 round</span>
+      </div>
+      <div class="tcard-flags"><img src="/fifa-app/w320/at.png" alt="Austria" title="Michaeld"/><img src="/fifa-app/w320/gr.png" alt="Greece" title="Nontas"/><img src="/fifa-app/w320/in.png" alt="India" title="Rakshith"/><img src="/fifa-app/w320/tr.png" alt="Turkey" title="Erhan"/><img src="/fifa-app/w320/co.png" alt="Colombia" title="Garcia"/></div>
+      <div class="podium"><div class="pod pod-1"><span class="pod-medal">&#129351;</span><img src="/fifa-app/w320/in.png" alt=""/><span class="pod-name">Rakshith</span><span class="pod-pts">25 pts</span></div><div class="pod pod-2"><span class="pod-medal">&#129352;</span><img src="/fifa-app/w320/co.png" alt=""/><span class="pod-name">Garcia</span><span class="pod-pts">22 pts</span></div><div class="pod pod-3"><span class="pod-medal">&#129353;</span><img src="/fifa-app/w320/at.png" alt=""/><span class="pod-name">Michaeld</span><span class="pod-pts">19 pts</span></div></div>
+    </a>
+    <a class="tcard" href="/fifa-app/tour_04_05_2026/">
+      <div class="tcard-top">
+        <span class="tcard-date">4 May 2026</span>
+        <span class="tcard-meta">5 players &middot; 15 games &middot; 1 round</span>
+      </div>
+      <div class="tcard-flags"><img src="/fifa-app/w320/in.png" alt="India" title="Ricky"/><img src="/fifa-app/w320/co.png" alt="Colombia" title="Alldad"/><img src="/fifa-app/w320/at.png" alt="Austria" title="Michaeld"/><img src="/fifa-app/w320/gr.png" alt="Greece" title="Nontas"/><img src="/fifa-app/w320/tr.png" alt="Turkey" title="Erhan"/></div>
+      <div class="podium"><div class="pod pod-1"><span class="pod-medal">&#129351;</span><img src="/fifa-app/w320/gr.png" alt=""/><span class="pod-name">Nontas</span><span class="pod-pts">23 pts</span></div><div class="pod pod-2"><span class="pod-medal">&#129352;</span><img src="/fifa-app/w320/in.png" alt=""/><span class="pod-name">Ricky</span><span class="pod-pts">22 pts</span></div><div class="pod pod-3"><span class="pod-medal">&#129353;</span><img src="/fifa-app/w320/at.png" alt=""/><span class="pod-name">Michaeld</span><span class="pod-pts">20 pts</span></div></div>
+    </a>
+  </div>
+  <p class="foot">Every result is a frozen snapshot &mdash; open a tournament for the full schedule, table and stats.</p>
+</div>
+</body>
+</html>
