@@ -19,8 +19,8 @@ NAT = {
 TOURNAMENTS = [
     {
         "slug": "04_05_2026",
-        "date": "2026-05-04",
-        "label": "4 May 2026",
+        "date": "2026-04-05",
+        "label": "April 5, 2026",
         "players": [("Ricky","in"),("Alldad","co"),("Michaeld","at"),("Nontas","gr"),("Erhan","tr")],
         "games": [
             (["Ricky","Alldad"],1,0,["Michaeld","Erhan"],False),
@@ -46,8 +46,8 @@ TOURNAMENTS = [
     },
     {
         "slug": "06_05_2026",
-        "date": "2026-05-06",
-        "label": "6 May 2026",
+        "date": "2026-06-05",
+        "label": "June 5, 2026",
         "players": [("Michaeld","at"),("Nontas","gr"),("Rakshith","in"),("Erhan","tr"),("Garcia","co")],
         "games": [
             (["Michaeld","Nontas"],0,2,["Rakshith","Erhan"],False),
@@ -73,8 +73,8 @@ TOURNAMENTS = [
     },
     {
         "slug": "09_05_2026",
-        "date": "2026-05-09",
-        "label": "9 May 2026",
+        "date": "2026-09-05",
+        "label": "September 5, 2026",
         "players": [("Erhan","tr"),("Ricky","de"),("Aldad","co"),("Nontas","gr"),("Doni","at")],
         "games": [
             (["Erhan","Ricky"],0,1,["Aldad","Doni"],False),
@@ -100,8 +100,8 @@ TOURNAMENTS = [
     },
     {
         "slug": "09_05_2026_02",
-        "date": "2026-05-09",
-        "label": "9 May 2026 (II)",
+        "date": "2026-09-05",
+        "label": "September 5, 2026 (II)",
         "players": [("Ricky","de"),("Eehan","tr"),("Alldad","co"),("Nontas","gr"),("Michael","at")],
         "games": [
             (["Ricky","Eehan"],1,6,["Alldad","Nontas"],False),
