@@ -128,6 +128,49 @@ TOURNAMENTS = [
 ]
 
 
+# The same five people played every tournament, sometimes under a different
+# name. Map each tournament's local names to one canonical identity (the name
+# and flag each used in the most recent tournament).
+IDENTITY = {
+    "04_05_2026":    {"Ricky":"Ricky","Alldad":"Alldad","Michaeld":"Michael","Nontas":"Nontas","Erhan":"Erhan"},
+    "06_05_2026":    {"Michaeld":"Michael","Nontas":"Nontas","Rakshith":"Ricky","Erhan":"Erhan","Garcia":"Alldad"},
+    "09_05_2026":    {"Erhan":"Erhan","Ricky":"Ricky","Aldad":"Alldad","Nontas":"Nontas","Doni":"Michael"},
+    "09_05_2026_02": {"Ricky":"Ricky","Erhan":"Erhan","Alldad":"Alldad","Nontas":"Nontas","Michael":"Michael"},
+}
+COMBINED_PLAYERS = [("Ricky","de"),("Erhan","tr"),("Alldad","co"),("Nontas","gr"),("Michael","at")]
+COMBINED_NOTE = (
+    "All four tournaments merged into one table &mdash; every game the group has played. "
+    "The same five people played each time, sometimes under a different name: the Colombian "
+    "also went by Garcia, the Austrian by Doni and Michaeld, and Ricky represented India "
+    "(once as &ldquo;Rakshith&rdquo;) before switching to Germany for the last two tournaments."
+)
+
+
+def build_combined():
+    games = []
+    for t in TOURNAMENTS:
+        m = IDENTITY[t["slug"]]
+        for a, sa, sb, b, ot in t["games"]:
+            games.append(([m[n] for n in a], sa, sb, [m[n] for n in b], ot))
+    exp = {n: [0, 0, 0, 0, 0, 0] for n, _ in COMBINED_PLAYERS}
+    for t in TOURNAMENTS:
+        m = IDENTITY[t["slug"]]
+        s, _ = compute(t)
+        for local, r in s.items():
+            e = exp[m[local]]
+            for i, k in enumerate(("w", "d", "l", "gf", "ga", "pts")):
+                e[i] += r[k]
+    return {
+        "slug": "all",
+        "date": "2026-09-06",
+        "label": "All Tournaments Together",
+        "players": COMBINED_PLAYERS,
+        "games": games,
+        "expected": {n: tuple(v) for n, v in exp.items()},
+        "note": COMBINED_NOTE,
+    }
+
+
 def compute(t):
     names = [n for n, _ in t["players"]]
     s = {n: dict(gp=0, w=0, d=0, l=0, gf=0, ga=0, pts=0) for n in names}
@@ -146,20 +189,25 @@ def compute(t):
     return s, ordered
 
 
+COMBINED = build_combined()
+ALL = TOURNAMENTS + [COMBINED]
+
+
 def verify():
     ok = True
-    for t in TOURNAMENTS:
+    for t in ALL:
         s, ordered = compute(t)
+        expected_gp = len(t["games"]) * 4 // 5
         for n, (w,d,l,gf,ga,pts) in t["expected"].items():
             r = s[n]
             got = (r["w"],r["d"],r["l"],r["gf"],r["ga"],r["pts"])
             if got != (w,d,l,gf,ga,pts):
                 ok = False
                 print(f"MISMATCH {t['slug']} {n}: expected {(w,d,l,gf,ga,pts)} got {got}")
-            if r["gp"] != 12:
+            if r["gp"] != expected_gp:
                 ok = False
-                print(f"GP!=12 {t['slug']} {n}: {r['gp']}")
-        print(f"{t['slug']}: winner {ordered[0]}  order {ordered}")
+                print(f"GP!={expected_gp} {t['slug']} {n}: {r['gp']}")
+        print(f"{t['slug']}: {len(t['games'])} games, winner {ordered[0]}  order {ordered}")
     return ok
 
 
@@ -169,7 +217,7 @@ def slug_pid(slug, name):
 
 def build_seed_js():
     entries = []
-    for t in TOURNAMENTS:
+    for t in ALL:
         slug = t["slug"]
         ts = int(datetime.fromisoformat(t["date"]).replace(tzinfo=timezone.utc).timestamp()*1000)
         # nudge the second same-day tournament later
@@ -302,6 +350,17 @@ document.getElementById('btn-history').addEventListener('click',openHistory);'''
         "})();",
         src, count=1, flags=re.S,
     )
+    # optional explanatory caption under the header (combined page)
+    if t.get("note"):
+        anchor = '    </div>\n    <div class="tab-bar">'
+        note_p = (
+            '    </div>\n'
+            '    <p style="font-size:.8rem;line-height:1.55;color:var(--text-secondary);'
+            'max-width:74ch;margin:2px 0 14px">' + t["note"] + '</p>\n'
+            '    <div class="tab-bar">'
+        )
+        assert anchor in src, "header anchor for combined note not found"
+        src = src.replace(anchor, note_p, 1)
     return src
 
 
@@ -347,6 +406,11 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-void);color:va
 }
 .tcard:hover{border-color:var(--blue-neon);box-shadow:0 0 22px var(--blue-glow)}
 .tcard:active{transform:scale(.995)}
+.tcard-all{border-color:rgba(255,215,0,.4);background:linear-gradient(135deg,#14120a,#0f1318 60%)}
+.tcard-all:hover{border-color:var(--gold);box-shadow:0 0 22px rgba(255,215,0,.18)}
+.tcard-all .tcard-date{color:var(--gold)}
+.tlist-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted);margin:10px 2px 0}
 .tcard-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .tcard-date{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-style:italic;font-size:1.5rem;
   text-transform:uppercase;letter-spacing:.03em}
@@ -385,36 +449,42 @@ __CARDS__
 """
 
 
-def build_overview(entries):
-    order = {t["slug"]: t for t in TOURNAMENTS}
-    cards = []
-    for e in entries:  # already newest-first
-        t = order[e["id"]]
-        s, ordered = compute(t)
-        flags = "".join(
-            f'<img src="/fifa-app/w320/{c}.png" alt="{NAT[c]}" title="{n}"/>'
-            for n, c in t["players"]
-        )
-        medals = ["&#129351;", "&#129352;", "&#129353;"]
-        pods = []
-        for i, n in enumerate(ordered[:3]):
-            code = dict(t["players"])[n]
-            pods.append(
-                f'<div class="pod pod-{i+1}"><span class="pod-medal">{medals[i]}</span>'
-                f'<img src="/fifa-app/w320/{code}.png" alt=""/>'
-                f'<span class="pod-name">{n}</span><span class="pod-pts">{s[n]["pts"]} pts</span></div>'
-            )
-        cards.append(
-            f'''    <a class="tcard" href="/fifa-app/tour_{t['slug']}/">
+def _card(t, extra_class="", meta=None):
+    s, ordered = compute(t)
+    flags = "".join(
+        f'<img src="/fifa-app/w320/{c}.png" alt="{NAT[c]}" title="{n}"/>'
+        for n, c in t["players"]
+    )
+    medals = ["&#129351;", "&#129352;", "&#129353;"]
+    codes = dict(t["players"])
+    pods = "".join(
+        f'<div class="pod pod-{i+1}"><span class="pod-medal">{medals[i]}</span>'
+        f'<img src="/fifa-app/w320/{codes[n]}.png" alt=""/>'
+        f'<span class="pod-name">{n}</span><span class="pod-pts">{s[n]["pts"]} pts</span></div>'
+        for i, n in enumerate(ordered[:3])
+    )
+    meta = meta or f"5 players &middot; {len(t['games'])} games &middot; 1 round"
+    return f'''    <a class="tcard{extra_class}" href="/fifa-app/tour_{t['slug']}/">
       <div class="tcard-top">
         <span class="tcard-date">{t['label']}</span>
-        <span class="tcard-meta">5 players &middot; 15 games &middot; 1 round</span>
+        <span class="tcard-meta">{meta}</span>
       </div>
       <div class="tcard-flags">{flags}</div>
-      <div class="podium">{''.join(pods)}</div>
+      <div class="podium">{pods}</div>
     </a>'''
-        )
-    return OVERVIEW_TMPL.replace("__CARDS__", "\n".join(cards))
+
+
+def build_overview(entries):
+    order = {t["slug"]: t for t in ALL}
+    combined = _card(COMBINED, " tcard-all",
+                     f"5 players &middot; {len(COMBINED['games'])} games &middot; every match combined")
+    singles = [_card(order[e["id"]]) for e in entries if e["id"] != "all"]
+    blocks = (
+        combined
+        + '\n    <p class="tlist-label">Individual tournaments</p>\n'
+        + "\n".join(singles)
+    )
+    return OVERVIEW_TMPL.replace("__CARDS__", blocks)
 
 
 def main():
@@ -431,7 +501,7 @@ def main():
     (REPO / "index.html").write_text(new_main, encoding="utf-8", newline="\n")
     print("patched index.html")
 
-    for t in TOURNAMENTS:
+    for t in ALL:
         entry = next(e for e in entries if e["id"] == t["slug"])
         page = patch_tour(main_src, seed_js, entry, t)
         assert f"loadDemoTournament({t['slug']!r})" in page
