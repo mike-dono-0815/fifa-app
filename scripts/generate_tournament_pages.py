@@ -362,8 +362,8 @@ document.getElementById('btn-history').addEventListener('click',openHistory);'''
         anchor = '    </div>\n    <div class="tab-bar">'
         note_p = (
             '    </div>\n'
-            '    <p style="font-size:.8rem;line-height:1.55;color:var(--text-secondary);'
-            'max-width:74ch;margin:2px 0 14px">' + t["note"] + '</p>\n'
+            '    <p style="font-size:.92rem;line-height:1.6;color:var(--text-secondary);'
+            'max-width:70ch;margin:2px 0 14px">' + t["note"] + '</p>\n'
             '    <div class="tab-bar">'
         )
         assert anchor in src, "header anchor for combined note not found"
@@ -384,14 +384,14 @@ OVERVIEW_TMPL = """<!DOCTYPE html>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 img{display:block}
 :root{
-  --bg-void:#080a0f;--bg-surface:#0f1318;--bg-raised:#161b23;
+  --bg-void:#080a0f;--bg-surface:#12171e;--bg-raised:#1b222c;
   --green-bright:#00e676;--blue-neon:#00b4ff;--blue-glow:rgba(0,180,255,.15);
   --purple:#a855f7;--gold:#ffd700;--silver:#c0c0c0;--bronze:#cd7f32;
-  --text-primary:#f0f4f8;--text-secondary:#7a9ab5;--text-muted:#3a5068;
-  --border-subtle:rgba(255,255,255,.06);--border-mid:rgba(255,255,255,.12);
+  --text-primary:#f5f7fa;--text-secondary:#aab9c9;--text-muted:#8394a6;
+  --border-subtle:rgba(255,255,255,.1);--border-mid:rgba(255,255,255,.17);
   --r:10px;--r-sm:6px;
 }
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-void);color:var(--text-primary);min-height:100vh;padding:40px 20px 80px}
+body{font-family:'Inter',system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;background:var(--bg-void);color:var(--text-primary);min-height:100vh;padding:40px 20px 80px}
 .wrap{max-width:760px;margin:0 auto}
 .hero{text-align:center;margin-bottom:36px}
 .hero h1{
@@ -400,7 +400,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-void);color:va
   background:linear-gradient(135deg,#fff 0%,var(--blue-neon) 50%,var(--green-bright) 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;
 }
-.hero .subtitle{color:var(--text-secondary);font-size:.85rem;letter-spacing:.12em;text-transform:uppercase}
+.hero .subtitle{color:var(--text-secondary);font-size:.92rem;letter-spacing:.12em;text-transform:uppercase}
 .hero a{display:inline-block;margin-top:16px;font-family:'Barlow Condensed',sans-serif;font-weight:700;
   font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;color:var(--blue-neon);text-decoration:none;
   border:1px solid var(--blue-neon);border-radius:var(--r-sm);padding:7px 16px;transition:background .2s}
@@ -416,12 +416,12 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-void);color:va
 .tcard-all{border-color:rgba(255,215,0,.4);background:linear-gradient(135deg,#14120a,#0f1318 60%)}
 .tcard-all:hover{border-color:var(--gold);box-shadow:0 0 22px rgba(255,215,0,.18)}
 .tcard-all .tcard-date{color:var(--gold)}
-.tlist-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;
-  letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted);margin:10px 2px 0}
+.tlist-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.84rem;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin:10px 2px 0}
 .tcard-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .tcard-date{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-style:italic;font-size:1.5rem;
   text-transform:uppercase;letter-spacing:.03em}
-.tcard-meta{color:var(--text-muted);font-size:.8rem;letter-spacing:.04em}
+.tcard-meta{color:var(--text-secondary);font-size:.85rem;letter-spacing:.04em}
 .tcard-flags{display:flex;gap:5px;margin-bottom:14px}
 .tcard-flags img{width:26px;height:18px;border-radius:2px;object-fit:cover;opacity:.9}
 .podium{display:flex;gap:10px;flex-wrap:wrap}
@@ -430,13 +430,13 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-void);color:va
 .pod img{width:22px;height:15px;border-radius:2px;object-fit:cover}
 .pod-medal{font-size:.95rem}
 .pod-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;text-transform:uppercase;letter-spacing:.02em}
-.pod-pts{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;color:var(--text-secondary)}
+.pod-pts{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.84rem;color:var(--text-secondary)}
 .pod-1{border-color:rgba(255,215,0,.35);box-shadow:inset 3px 0 12px rgba(255,215,0,.12)}
 .pod-1 .pod-name{color:var(--gold)}
 .pod-2 .pod-name{color:var(--silver)}
 .pod-3 .pod-name{color:var(--bronze)}
-.foot{margin-top:40px;text-align:center;color:var(--text-muted);font-size:.78rem}
-.foot a{color:var(--text-secondary)}
+.foot{margin-top:40px;text-align:center;color:var(--text-secondary);font-size:.84rem;line-height:1.5}
+.foot a{color:var(--blue-neon)}
 </style>
 </head>
 <body>
