@@ -1516,6 +1516,14 @@ window.FifaSync = {
       }, (err) => console.error('[fifa-sync] onFinishedChange failed', err));
     });
   },
+
+  async fetchFinishedById(id) {
+    await authReady;
+    try {
+      const snap = await getDoc(doc(db, 'finished', id));
+      return snap.exists() ? snap.data() : null;
+    } catch (err) { console.error('[fifa-sync] fetchFinishedById failed', err); return null; }
+  },
 };
 
 window.dispatchEvent(new Event('fifa-sync-ready'));
@@ -3164,12 +3172,32 @@ function initFifaSync(){
   else window.addEventListener('fifa-sync-ready',subscribe,{once:true});
 }
 
+// Lets any finished tournament — including ones this browser has never seen
+// locally — be opened via ?tour=<id>, e.g. links from the /alltournaments/
+// overview page for results that don't have a dedicated generated permalink.
+function tryLoadFromQuery(){
+  const tid=new URLSearchParams(location.search).get('tour');
+  if(!tid)return;
+  if(getFinishedTournaments().some(t=>t.id===tid)){loadDemoTournament(tid);return;}
+  const tryFetch=()=>{
+    window.FifaSync.fetchFinishedById(tid).then(record=>{
+      if(!record)return;
+      const list=getRemoteFinished();
+      if(!list.some(t=>t.id===record.id)){list.push(record);putRemoteFinished(list);}
+      loadDemoTournament(tid);
+    }).catch(()=>{});
+  };
+  if(window.FifaSync)tryFetch();
+  else window.addEventListener('fifa-sync-ready',tryFetch,{once:true});
+}
+
 /* ════════════════════════════════════════
    INIT
 ════════════════════════════════════════ */
 (function init(){
   updateSaveBadge();
   initFifaSync();
+  tryLoadFromQuery();
   try{
     const live=localStorage.getItem(LIVE_KEY);
     if(live){

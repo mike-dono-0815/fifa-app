@@ -73,7 +73,7 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:16px;line-height:1.5;-we
     <p class="subtitle">FC 2v2 &nbsp;·&nbsp; WC Edition</p>
     <a href="/fifa-app/">&#8592; Back to the app</a>
   </div>
-  <div class="tlist">
+  <div class="tlist" id="tlist">
     <a class="tcard tcard-all" href="/fifa-app/tour_all/">
       <div class="tcard-top">
         <span class="tcard-date">All Tournaments Together</span>
@@ -118,5 +118,66 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:16px;line-height:1.5;-we
   </div>
   <p class="foot">Every result is a frozen snapshot &mdash; open a tournament for the full schedule, table and stats.</p>
 </div>
+<script type="module">
+// Tournaments finished since this page was last generated live only in
+// Firestore (no dedicated /tour_<slug>/ permalink yet) — fetch them and
+// render extra cards, linking to the main app's ?tour=<id> viewer.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const firebaseConfig = {"apiKey": "AIzaSyC36NBoG57uoVCdUAlfIL4JiGKEB0BjAYk", "authDomain": "fifa-app-53912.firebaseapp.com", "projectId": "fifa-app-53912", "storageBucket": "fifa-app-53912.firebasestorage.app", "messagingSenderId": "521169789381", "appId": "1:521169789381:web:4e32b01f67421ac07fabac"};
+const STATIC_IDS = ["all", "09_05_2026_02", "09_05_2026", "06_05_2026", "04_05_2026"];
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function computeStandings(state){
+  const s={};
+  state.players.forEach(p=>{s[p.id]={id:p.id,name:p.name,code:p.countryCode,pts:0,gf:0,ga:0};});
+  state.games.forEach(g=>{
+    if(!g.confirmed)return;
+    g.teamA.forEach(pid=>{const r=s[pid];if(!r)return;r.gf+=g.scoreA;r.ga+=g.scoreB;r.pts+=g.scoreA>g.scoreB?3:(g.scoreA===g.scoreB?1:0);});
+    g.teamB.forEach(pid=>{const r=s[pid];if(!r)return;r.gf+=g.scoreB;r.ga+=g.scoreA;r.pts+=g.scoreB>g.scoreA?3:(g.scoreB===g.scoreA?1:0);});
+  });
+  return Object.values(s).sort((a,b)=>(b.pts-a.pts)||((b.gf-b.ga)-(a.gf-a.ga))||(b.gf-a.gf)||a.name.localeCompare(b.name));
+}
+
+function renderCard(record){
+  const standings=computeStandings(record.state);
+  const medals=['&#129351;','&#129352;','&#129353;'];
+  const flags=(record.players||[]).map(p=>`<img src="/fifa-app/w320/${esc(p.code)}.png" alt="${esc(p.name)}" title="${esc(p.name)}"/>`).join('');
+  const pods=standings.slice(0,3).map((r,i)=>`<div class="pod pod-${i+1}"><span class="pod-medal">${medals[i]}</span><img src="/fifa-app/w320/${esc(r.code)}.png" alt=""/><span class="pod-name">${esc(r.name)}</span><span class="pod-pts">${r.pts} pts</span></div>`).join('');
+  const dateLabel=new Date(record.savedAt||Date.now()).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const gamesPlayed=record.state.games.filter(g=>g.confirmed).length;
+  const meta=`${(record.players||[]).length} players &middot; ${gamesPlayed} games &middot; round ${record.state.currentRound||1}`;
+  const a=document.createElement('a');
+  a.className='tcard';
+  a.href=`/fifa-app/?tour=${encodeURIComponent(record.id)}`;
+  a.innerHTML=`<div class="tcard-top"><span class="tcard-date">${esc(dateLabel)}</span><span class="tcard-meta">${meta}</span></div>`
+    +`<div class="tcard-flags">${flags}</div><div class="podium">${pods}</div>`;
+  return a;
+}
+
+(async function loadDynamicTournaments(){
+  try{
+    const app=initializeApp(firebaseConfig);
+    await signInAnonymously(getAuth(app));
+    const db=getFirestore(app);
+    const snap=await getDocs(collection(db,'finished'));
+    const records=snap.docs.map(d=>d.data()).filter(r=>
+      r&&r.id&&!STATIC_IDS.includes(r.id)&&r.state&&r.state.players&&r.state.players.length&&r.state.games&&r.state.games.length);
+    if(!records.length)return;
+    records.sort((a,b)=>(b.savedAt||0)-(a.savedAt||0));
+    const list=document.getElementById('tlist');
+    const label=document.createElement('p');
+    label.className='tlist-label';
+    label.textContent='Recently added';
+    const frag=document.createDocumentFragment();
+    frag.appendChild(label);
+    records.forEach(r=>frag.appendChild(renderCard(r)));
+    list.insertBefore(frag,list.firstChild);
+  }catch(err){console.error('[fifa-sync] failed to load recent tournaments',err);}
+})();
+</script>
 </body>
 </html>

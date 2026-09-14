@@ -1434,6 +1434,99 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   </div>
 </div>
 
+<script type="module">
+// Cloud sync: mirrors the live tournament + finished-tournament archive to
+// Firestore so progress isn't stuck in one browser's localStorage. Auth is
+// anonymous (no login UI) — Firestore rules only require request.auth!=null.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getFirestore, doc, setDoc, getDoc, deleteDoc, onSnapshot, collection,
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC36NBoG57uoVCdUAlfIL4JiGKEB0BjAYk",
+  authDomain: "fifa-app-53912.firebaseapp.com",
+  projectId: "fifa-app-53912",
+  storageBucket: "fifa-app-53912.firebasestorage.app",
+  messagingSenderId: "521169789381",
+  appId: "1:521169789381:web:4e32b01f67421ac07fabac",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const liveDocRef = doc(db, 'live', 'current');
+
+let lastPushedAt = 0;
+
+const authReady = new Promise((resolve) => {
+  onAuthStateChanged(auth, (user) => { if (user) resolve(user); });
+  signInAnonymously(auth).catch((err) => console.error('[fifa-sync] anonymous sign-in failed', err));
+});
+
+window.FifaSync = {
+  ready: authReady,
+
+  async pushLive(state, updatedAt = Date.now()) {
+    await authReady;
+    lastPushedAt = updatedAt;
+    try { await setDoc(liveDocRef, { state, updatedAt }); }
+    catch (err) { console.error('[fifa-sync] pushLive failed', err); }
+  },
+
+  async clearLive() {
+    await authReady;
+    lastPushedAt = Date.now();
+    try { await deleteDoc(liveDocRef); }
+    catch (err) { console.error('[fifa-sync] clearLive failed', err); }
+  },
+
+  async fetchLive() {
+    await authReady;
+    try {
+      const snap = await getDoc(liveDocRef);
+      return snap.exists() ? snap.data() : null;
+    } catch (err) { console.error('[fifa-sync] fetchLive failed', err); return null; }
+  },
+
+  onLiveChange(cb) {
+    authReady.then(() => {
+      onSnapshot(liveDocRef, (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        if (!data.updatedAt || data.updatedAt <= lastPushedAt) return; // echo of our own write
+        cb(data.state, data.updatedAt);
+      }, (err) => console.error('[fifa-sync] onLiveChange failed', err));
+    });
+  },
+
+  async pushFinished(record) {
+    await authReady;
+    try { await setDoc(doc(db, 'finished', record.id), record); }
+    catch (err) { console.error('[fifa-sync] pushFinished failed', err); }
+  },
+
+  onFinishedChange(cb) {
+    authReady.then(() => {
+      onSnapshot(collection(db, 'finished'), (snap) => {
+        cb(snap.docs.map((d) => d.data()));
+      }, (err) => console.error('[fifa-sync] onFinishedChange failed', err));
+    });
+  },
+
+  async fetchFinishedById(id) {
+    await authReady;
+    try {
+      const snap = await getDoc(doc(db, 'finished', id));
+      return snap.exists() ? snap.data() : null;
+    } catch (err) { console.error('[fifa-sync] fetchFinishedById failed', err); return null; }
+  },
+};
+
+window.dispatchEvent(new Event('fifa-sync-ready'));
+</script>
+
 <script>
 'use strict';
 
@@ -1443,6 +1536,17 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
 const MAX_SAVES = 50;
 const LIVE_KEY = 'fc2026_live';
 const SNAPSHOTS_KEY = 'fc2026_snapshots';
+// Cache of finished tournaments learned from Firestore (other devices'
+// archives), merged into getFinishedTournaments() but kept separate from the
+// generator-owned FINISHED_KEY list.
+const REMOTE_FINISHED_KEY = 'fc2026_finished_remote';
+// Timestamp of the newest live-state revision this browser knows about,
+// whether it came from a local edit or a remote device — used to decide
+// whether an incoming Firestore update is actually newer than what we have.
+const LIVE_UPDATED_KEY = 'fc2026_live_updatedAt';
+let liveSyncTimer = null;
+let lastRemoteLiveAt = 0;
+try{lastRemoteLiveAt=Number(localStorage.getItem(LIVE_UPDATED_KEY))||0;}catch(_){}
 
 /* ════════════════════════════════════════
    COUNTRIES DATA
@@ -1536,24 +1640,38 @@ const SEED_FINISHED_TOURNAMENTS = [
 function getFinishedTournaments(){
   try{
     const raw=localStorage.getItem(FINISHED_KEY);
+    let list;
     if(raw===null){
       // First run on this browser: seed with the example, then persist it.
       putFinishedTournaments(SEED_FINISHED_TOURNAMENTS);
-      return SEED_FINISHED_TOURNAMENTS;
+      list=SEED_FINISHED_TOURNAMENTS;
+    }else{
+      list=JSON.parse(raw)||[];
+      // Drop retired seed entries left over from an earlier app version, and
+      // backfill the corrected seed if nothing has replaced it yet.
+      const before=list.length;
+      list=list.filter(t=>!RETIRED_SEED_IDS.includes(t.id));
+      if(list.length!==before&&!list.some(t=>SEED_FINISHED_TOURNAMENTS.some(s=>s.id===t.id))){
+        list=[...SEED_FINISHED_TOURNAMENTS,...list];
+      }
+      if(list.length!==before)putFinishedTournaments(list);
     }
-    let list=JSON.parse(raw)||[];
-    // Drop retired seed entries left over from an earlier app version, and
-    // backfill the corrected seed if nothing has replaced it yet.
-    const before=list.length;
-    list=list.filter(t=>!RETIRED_SEED_IDS.includes(t.id));
-    if(list.length!==before&&!list.some(t=>SEED_FINISHED_TOURNAMENTS.some(s=>s.id===t.id))){
-      list=[...SEED_FINISHED_TOURNAMENTS,...list];
-    }
-    if(list.length!==before)putFinishedTournaments(list);
-    return list;
+    return mergeRemoteFinished(list);
   }catch{return[];}
 }
 function putFinishedTournaments(list){try{localStorage.setItem(FINISHED_KEY,JSON.stringify(list));}catch(_){}}
+
+function getRemoteFinished(){try{return JSON.parse(localStorage.getItem(REMOTE_FINISHED_KEY))||[];}catch{return[];}}
+function putRemoteFinished(list){try{localStorage.setItem(REMOTE_FINISHED_KEY,JSON.stringify(list));}catch(_){}}
+// Tournaments archived from other devices arrive here via Firestore; merge
+// them in without letting them shadow a local copy of the same id.
+function mergeRemoteFinished(list){
+  const remote=getRemoteFinished();
+  if(!remote.length)return list;
+  const byId=new Map(list.map(t=>[t.id,t]));
+  for(const t of remote)if(!byId.has(t.id))byId.set(t.id,t);
+  return[...byId.values()].sort((a,b)=>b.savedAt-a.savedAt);
+}
 
 function archiveFinishedTournament(){
   if(!STATE.players.length||!STATE.games.some(g=>g.confirmed))return null;
@@ -1573,6 +1691,7 @@ function archiveFinishedTournament(){
   list.unshift(record);
   if(list.length>MAX_FINISHED)list.length=MAX_FINISHED;
   putFinishedTournaments(list);
+  if(window.FifaSync)window.FifaSync.pushFinished(record);
   return record.id;
 }
 
@@ -2478,6 +2597,7 @@ function finishTournament(){
   if(!newId)return;
   loadedFinishedId=newId;
   try{localStorage.removeItem(LIVE_KEY);}catch(_){}
+  if(window.FifaSync)window.FifaSync.clearLive();
   renderSchedule();
   renderStandings();
   renderStats();
@@ -2547,6 +2667,21 @@ function saveState(triggerGameId){
   // Coalesce rapid-fire edits to the same game (score clicks, OT toggle) into
   // a single snapshot once things settle, instead of one save per click.
   snapshotTimer=setTimeout(commitSnapshot,triggerGameId?SNAPSHOT_DEBOUNCE_MS:0);
+  scheduleLiveSync();
+}
+
+const LIVE_SYNC_DEBOUNCE_MS = 600;
+function scheduleLiveSync(){
+  if(liveSyncTimer)clearTimeout(liveSyncTimer);
+  liveSyncTimer=setTimeout(()=>{liveSyncTimer=null;pushLiveNow();},LIVE_SYNC_DEBOUNCE_MS);
+}
+// Stamps this revision as the newest one this browser knows about, so a
+// stale remote fetch on a later reload can't clobber it, then pushes it.
+function pushLiveNow(){
+  const updatedAt=Date.now();
+  lastRemoteLiveAt=updatedAt;
+  try{localStorage.setItem(LIVE_UPDATED_KEY,String(updatedAt));}catch(_){}
+  if(window.FifaSync)window.FifaSync.pushLive(JSON.parse(JSON.stringify(STATE)),updatedAt);
 }
 
 function commitSnapshot(){
@@ -2576,10 +2711,14 @@ function commitSnapshot(){
 // Flush a pending debounced snapshot immediately if the tab is closed or
 // backgrounded before it fires, so a save right before navigating away isn't lost.
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='hidden'&&snapshotTimer){clearTimeout(snapshotTimer);commitSnapshot();}
+  if(document.visibilityState==='hidden'){
+    if(snapshotTimer){clearTimeout(snapshotTimer);commitSnapshot();}
+    if(liveSyncTimer){clearTimeout(liveSyncTimer);liveSyncTimer=null;pushLiveNow();}
+  }
 });
 window.addEventListener('pagehide',()=>{
   if(snapshotTimer){clearTimeout(snapshotTimer);commitSnapshot();}
+  if(liveSyncTimer){clearTimeout(liveSyncTimer);liveSyncTimer=null;pushLiveNow();}
 });
 
 function updateSaveBadge(){
@@ -2981,6 +3120,55 @@ document.getElementById('history-list').addEventListener('click',e=>{
     putSnapshots(snaps);updateSaveBadge();renderHistoryList();
   }
 });
+
+/* ════════════════════════════════════════
+   CLOUD SYNC (live tournament + finished archive)
+════════════════════════════════════════ */
+// Adopts a live tournament pushed from another device — either the initial
+// catch-up fetch on load, or a realtime update while this tab is open.
+function applyRemoteLive(remoteState,updatedAt){
+  if(loadedFinishedId)return; // viewing a frozen/archived tournament — don't clobber it
+  if(!updatedAt||updatedAt<=lastRemoteLiveAt)return;
+  lastRemoteLiveAt=updatedAt;
+  if(!remoteState||!remoteState.players||!remoteState.players.length||!remoteState.games||!remoteState.games.length)return;
+  Object.assign(STATE,remoteState);
+  try{
+    localStorage.setItem(LIVE_KEY,JSON.stringify(STATE));
+    localStorage.setItem(LIVE_UPDATED_KEY,String(updatedAt));
+  }catch(_){}
+  showScreen('tournament');
+  renderSchedule();
+  renderStandings();
+  renderStats();
+}
+function initFifaSync(){
+  function subscribe(){
+    window.FifaSync.fetchLive().then(data=>{if(data)applyRemoteLive(data.state,data.updatedAt);}).catch(()=>{});
+    window.FifaSync.onLiveChange(applyRemoteLive);
+    window.FifaSync.onFinishedChange(remoteList=>putRemoteFinished(remoteList));
+  }
+  if(window.FifaSync)subscribe();
+  else window.addEventListener('fifa-sync-ready',subscribe,{once:true});
+}
+
+// Lets any finished tournament — including ones this browser has never seen
+// locally — be opened via ?tour=<id>, e.g. links from the /alltournaments/
+// overview page for results that don't have a dedicated generated permalink.
+function tryLoadFromQuery(){
+  const tid=new URLSearchParams(location.search).get('tour');
+  if(!tid)return;
+  if(getFinishedTournaments().some(t=>t.id===tid)){loadDemoTournament(tid);return;}
+  const tryFetch=()=>{
+    window.FifaSync.fetchFinishedById(tid).then(record=>{
+      if(!record)return;
+      const list=getRemoteFinished();
+      if(!list.some(t=>t.id===record.id)){list.push(record);putRemoteFinished(list);}
+      loadDemoTournament(tid);
+    }).catch(()=>{});
+  };
+  if(window.FifaSync)tryFetch();
+  else window.addEventListener('fifa-sync-ready',tryFetch,{once:true});
+}
 
 /* ════════════════════════════════════════
    INIT
