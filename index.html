@@ -2125,16 +2125,26 @@ function renderTableExtras(){
 
   const standings=computeStandings();
   const {ps,streaks,awards,otGames}=computeStats();
+  // Once the tournament is over there's no "current" form left to track —
+  // show the full game log instead of the last 10, and the best winning
+  // streak of the tournament instead of whatever streak it happened to end on.
+  const finished=!!loadedFinishedId;
 
   const formRows=standings.map(r=>{
     const p=playerById(r.id);
     const results=ps[r.id]?.gameResults||[];
-    const last10=results.slice(-10);
-    const padded=[...Array(Math.max(0,10-last10.length)).fill('empty'),...last10];
+    const shown=finished?results:results.slice(-10);
+    const padded=finished?shown:[...Array(Math.max(0,10-shown.length)).fill('empty'),...shown];
     const st=streaks[r.id];
-    const col=st?.type==='W'?'var(--win)':st?.type==='L'?'var(--loss)':'var(--draw)';
-    const streakLabel=st?.type==='W'?'W streak':st?.type==='L'?'L streak':'game unbeaten';
-    const streakStr=st?.current?`${st.current} ${streakLabel}`:'';
+    let col,streakStr;
+    if(finished){
+      col='var(--win)';
+      streakStr=st?.longestW?`${st.longestW} W streak (best)`:'';
+    }else{
+      col=st?.type==='W'?'var(--win)':st?.type==='L'?'var(--loss)':'var(--draw)';
+      const streakLabel=st?.type==='W'?'W streak':st?.type==='L'?'L streak':'game unbeaten';
+      streakStr=st?.current?`${st.current} ${streakLabel}`:'';
+    }
     return`<div class="form-row">
       <img class="form-flag" src="${flagSrc(p.countryCode)}" alt="" onerror="this.style.opacity='0'"/>
       <span class="form-name">${p.name}</span>
@@ -2145,7 +2155,7 @@ function renderTableExtras(){
 
   el.innerHTML=`
     <div class="stats-section" style="margin-top:24px">
-      <div class="stats-section-title">Current Form</div>
+      <div class="stats-section-title">${finished?'Game Log':'Current Form'}</div>
       ${formRows}
     </div>
     <div class="stats-section">
