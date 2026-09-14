@@ -1256,7 +1256,12 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
 
   /* Show only the tournament screen content */
   #screen-setup{display:none!important}
-  #screen-tournament{display:block!important}
+  /* flex (not block) so the order-based Table→Schedule→Stats reorder below
+     actually applies — a plain display:block here silently made the later
+     `order` values inert, so break-before:page on the DOM-first tab
+     (Schedule) fired before any content had rendered, printing a blank
+     leading page. */
+  #screen-tournament{display:flex!important;flex-direction:column;min-height:0!important}
 
   /* Show all three tab panels stacked */
   .tab-panel{display:block!important;padding:0!important}
@@ -1275,8 +1280,7 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
     text-transform:uppercase;letter-spacing:.08em;color:var(--blue-neon);
     border-bottom:1px solid var(--border-subtle);padding-bottom:6px;margin-bottom:14px}
 
-  /* Reorder sections: Table → Schedule → Stats */
-  #screen-tournament{display:flex;flex-direction:column}
+  /* Reorder sections: Table → Schedule → Stats (display:flex set above) */
   #tab-table{order:1}
   #tab-schedule{order:2;break-before:page}
   #tab-stats{order:3;break-before:page}
