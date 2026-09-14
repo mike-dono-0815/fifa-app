@@ -19,7 +19,7 @@ NAT = {
 # design-tokens-two-places note: this is now a third thing kept in sync by
 # hand across index.html and this script's OVERVIEW_TMPL).
 FIREBASE_CONFIG = {
-    "apiKey": "AIzaSyC36NBoG57uoVCdUAlfIL4JiGKEB0BjAYk",
+    "apiKey": "AIzaSyBxO4SpuKKCP25Z5Fz8g3pW3WKvPhLuzEk",
     "authDomain": "fifa-app-53912.firebaseapp.com",
     "projectId": "fifa-app-53912",
     "storageBucket": "fifa-app-53912.firebasestorage.app",
