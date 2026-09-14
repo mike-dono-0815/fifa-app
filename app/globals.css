@@ -68,3 +68,92 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+.tab-panel {
+  display: none;
+}
+.tab-panel.active {
+  display: block;
+}
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  @page {
+    margin: 0.5in;
+    size: A4;
+  }
+
+  /* Every component is already built on these custom properties, so
+     flipping them here turns the whole dark theme light without touching
+     each component individually. */
+  :root {
+    --color-void: #ffffff;
+    --color-surface: #f3f4f6;
+    --color-raised: #e9ebee;
+    --color-input: #ffffff;
+    --color-blue-neon: #0077b6;
+    --color-purple: #7c3aed;
+    --color-purple-text: #7c3aed;
+    --color-gold: #9a7300;
+    --color-gold-dim: #8a6508;
+    --color-silver: #5b6773;
+    --color-bronze: #a15c2e;
+    --color-text-primary: #0b0d10;
+    --color-text-secondary: #3a4552;
+    --color-text-muted: #5b6773;
+    --color-win: #0a8a44;
+    --color-loss: #c62828;
+    --color-draw: #0077b6;
+    --color-border-subtle: rgba(0, 0, 0, 0.14);
+    --color-border-mid: rgba(0, 0, 0, 0.26);
+  }
+  body {
+    background: #fff;
+  }
+
+  /* Show all three tab panels stacked, not just the one last clicked. */
+  .tab-panel {
+    display: block !important;
+    padding: 0 !important;
+  }
+  #tab-table::before,
+  #tab-schedule::before,
+  #tab-stats::before {
+    display: block;
+    font-family: var(--font-barlow-condensed), sans-serif;
+    font-weight: 900;
+    font-size: 1.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-blue-neon);
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+  }
+  #tab-table::before {
+    content: 'Standings';
+  }
+  #tab-schedule::before {
+    content: 'Schedule';
+  }
+  #tab-stats::before {
+    content: 'Statistics';
+  }
+  /* Table→Schedule→Stats via source order + break-before, not a flex
+     `order` reorder — that combination drew a stray vertical line down
+     the right edge of every printed page in Chromium. */
+  #tab-schedule {
+    break-before: page;
+  }
+  #tab-stats {
+    break-before: page;
+  }
+
+  /* Avoid orphaned cards/rows and stray mid-block page breaks. */
+  .print-avoid-break {
+    break-inside: avoid;
+  }
+}

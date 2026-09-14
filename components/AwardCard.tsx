@@ -28,7 +28,7 @@ function AwardCard({
 }) {
   if (!player) {
     return (
-      <div className="flex flex-col items-center gap-1 rounded-fifa border border-border-subtle bg-surface p-3 text-center opacity-40">
+      <div className="print-avoid-break flex flex-col items-center gap-1 rounded-fifa border border-border-subtle bg-surface p-3 text-center opacity-40">
         <div className="text-2xl">{icon}</div>
         <div className="text-xs font-semibold uppercase tracking-wide text-text-secondary">{title}</div>
         <div className="text-xs text-text-muted">Not enough data yet</div>
@@ -37,7 +37,7 @@ function AwardCard({
   }
   const p = playerById(players, player.id)
   return (
-    <div className={`flex flex-col items-center gap-1 rounded-fifa border p-3 text-center ${styleClasses[style]}`}>
+    <div className={`print-avoid-break flex flex-col items-center gap-1 rounded-fifa border p-3 text-center ${styleClasses[style]}`}>
       <div className="text-2xl">{icon}</div>
       <div className="text-xs font-semibold uppercase tracking-wide text-text-secondary">{title}</div>
       <span className="flex items-center gap-1.5 text-sm font-semibold text-text-primary">

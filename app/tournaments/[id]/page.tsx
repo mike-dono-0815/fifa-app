@@ -5,6 +5,7 @@ import { games as gamesTable, players as playersTable, tournaments } from '@/lib
 import { toGames, toPlayers } from '@/lib/tournament/toState'
 import { TournamentTabs } from '@/components/TournamentTabs'
 import { LiveRefresher } from '@/components/LiveRefresher'
+import { PrintButton } from '@/components/PrintButton'
 
 export default async function TournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -27,9 +28,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <p className="text-sm text-gold">🏆 {tournament.winnerName}</p>
           )}
         </div>
-        <a href="/tournaments" className="text-sm text-blue-neon hover:underline">
-          All Tournaments →
-        </a>
+        <div className="flex items-center gap-3">
+          <PrintButton />
+          <a href="/tournaments" className="print:hidden text-sm text-blue-neon hover:underline">
+            All Tournaments →
+          </a>
+        </div>
       </div>
 
       <LiveRefresher active={tournament.status === 'live'} />

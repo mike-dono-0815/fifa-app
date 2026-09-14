@@ -23,7 +23,7 @@ export function TournamentTabs({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex gap-1 border-b border-border-subtle">
+      <div className="flex gap-1 border-b border-border-subtle print:hidden">
         {(['schedule', 'table', 'stats'] as const).map((t) => (
           <button
             key={t}
@@ -40,11 +40,18 @@ export function TournamentTabs({
         ))}
       </div>
 
-      {tab === 'schedule' && (
+      {/* All three panels stay mounted (visibility via .tab-panel/.active,
+          not conditional rendering) so @media print can reveal all three
+          stacked, not just whichever one was last clicked. */}
+      <div id="tab-table" className={`tab-panel${tab === 'table' ? ' active' : ''}`}>
+        <TableTab players={players} games={games} finished={status === 'finished'} />
+      </div>
+      <div id="tab-schedule" className={`tab-panel${tab === 'schedule' ? ' active' : ''}`}>
         <ScheduleTab games={games} players={players} tournamentId={tournamentId} status={status} />
-      )}
-      {tab === 'table' && <TableTab players={players} games={games} finished={status === 'finished'} />}
-      {tab === 'stats' && <StatsTab players={players} games={games} />}
+      </div>
+      <div id="tab-stats" className={`tab-panel${tab === 'stats' ? ' active' : ''}`}>
+        <StatsTab players={players} games={games} />
+      </div>
     </div>
   )
 }

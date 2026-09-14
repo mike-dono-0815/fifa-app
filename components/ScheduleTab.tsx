@@ -54,7 +54,7 @@ function GameRow({
 
   return (
     <div
-      className={`grid grid-cols-[2rem_1fr_auto_1fr] items-center gap-2 rounded-fifa-sm border p-2.5 ${
+      className={`print-avoid-break grid grid-cols-[2rem_1fr_auto_1fr] items-center gap-2 rounded-fifa-sm border p-2.5 ${
         game.confirmed ? 'border-green-mid/40 bg-surface' : 'border-border-subtle bg-raised'
       } ${locked ? 'pointer-events-none opacity-30' : ''} ${game.overtime ? 'ring-1 ring-purple/50' : ''}`}
     >
@@ -69,7 +69,7 @@ function GameRow({
           <button
             type="button"
             onClick={() => toggleOvertime(game.id)}
-            className={`rounded px-1.5 text-[10px] font-bold ${
+            className={`print:hidden rounded px-1.5 text-[10px] font-bold ${
               game.overtime ? 'bg-purple text-white' : 'text-text-muted hover:text-text-secondary'
             }`}
           >
@@ -88,7 +88,7 @@ function GameRow({
               type="button"
               disabled={game.scoreA === 0 || isPending}
               onClick={() => score('a', -1)}
-              className="h-6 w-6 rounded bg-input text-text-primary disabled:opacity-30"
+              className="print:hidden h-6 w-6 rounded bg-input text-text-primary disabled:opacity-30"
             >
               −
             </button>
@@ -97,7 +97,7 @@ function GameRow({
               type="button"
               disabled={isPending}
               onClick={() => score('a', 1)}
-              className="h-6 w-6 rounded bg-input text-text-primary"
+              className="print:hidden h-6 w-6 rounded bg-input text-text-primary"
             >
               +
             </button>
@@ -105,7 +105,7 @@ function GameRow({
               type="button"
               disabled={isPending}
               onClick={() => startTransition(() => confirmGame(game.id))}
-              className={`px-1 text-sm ${confirmable ? 'text-blue-neon' : 'text-text-muted'}`}
+              className={`print:hidden px-1 text-sm ${confirmable ? 'text-blue-neon' : 'text-text-muted'}`}
               title="Confirm as shown"
             >
               –
@@ -114,7 +114,7 @@ function GameRow({
               type="button"
               disabled={isPending}
               onClick={() => score('b', 1)}
-              className="h-6 w-6 rounded bg-input text-text-primary"
+              className="print:hidden h-6 w-6 rounded bg-input text-text-primary"
             >
               +
             </button>
@@ -123,13 +123,13 @@ function GameRow({
               type="button"
               disabled={game.scoreB === 0 || isPending}
               onClick={() => score('b', -1)}
-              className="h-6 w-6 rounded bg-input text-text-primary disabled:opacity-30"
+              className="print:hidden h-6 w-6 rounded bg-input text-text-primary disabled:opacity-30"
             >
               −
             </button>
           </div>
         )}
-        <div className={`h-1.5 w-1.5 rounded-full ${game.confirmed ? 'bg-green-bright' : 'bg-text-muted'}`} />
+        <div className={`print:hidden h-1.5 w-1.5 rounded-full ${game.confirmed ? 'bg-green-bright' : 'bg-text-muted'}`} />
       </div>
 
       <TeamPair ids={game.teamB} players={players} />
@@ -176,7 +176,7 @@ export function ScheduleTab({
         <button
           type="button"
           onClick={() => lockFinalScore(tournamentId)}
-          className="self-center rounded-fifa border border-green-bright px-4 py-2 text-sm font-semibold text-green-bright hover:bg-green-bright/10"
+          className="print:hidden self-center rounded-fifa border border-green-bright px-4 py-2 text-sm font-semibold text-green-bright hover:bg-green-bright/10"
         >
           Lock in Final Score
         </button>
