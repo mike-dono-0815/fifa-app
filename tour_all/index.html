@@ -1273,12 +1273,7 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
 
   /* Show only the tournament screen content */
   #screen-setup{display:none!important}
-  /* flex (not block) so the order-based Table→Schedule→Stats reorder below
-     actually applies — a plain display:block here silently made the later
-     `order` values inert, so break-before:page on the DOM-first tab
-     (Schedule) fired before any content had rendered, printing a blank
-     leading page. */
-  #screen-tournament{display:flex!important;flex-direction:column;min-height:0!important}
+  #screen-tournament{display:block!important}
 
   /* Show all three tab panels stacked */
   .tab-panel{display:block!important;padding:0!important}
@@ -1297,10 +1292,14 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
     text-transform:uppercase;letter-spacing:.08em;color:var(--blue-neon);
     border-bottom:1px solid var(--border-subtle);padding-bottom:6px;margin-bottom:14px}
 
-  /* Reorder sections: Table → Schedule → Stats (display:flex set above) */
-  #tab-table{order:1}
-  #tab-schedule{order:2;break-before:page}
-  #tab-stats{order:3;break-before:page}
+  /* Table→Schedule→Stats order comes from the HTML source order now (see
+     the comment on #tab-table); this just adds the page breaks between them.
+     Reordering via flex `order` used to do both jobs, but Chromium's print
+     renderer drew a stray vertical line down the right edge of every page
+     when a break-before landed on a flex item moved earlier by `order` —
+     plain block flow + real source order doesn't hit that bug. */
+  #tab-schedule{break-before:page}
+  #tab-stats{break-before:page}
 
   /* Keep the header for its title, but drop the buttons in it */
   .tourney-header{
@@ -1422,13 +1421,10 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
     </div>
   </div>
 
-  <div id="tab-schedule" class="tab-panel active">
-    <!-- round blocks injected here -->
-    <div class="next-round-wrap" id="next-round-wrap">
-      <button class="btn-final-scores" id="btn-final-scores">Final Scores</button>
-    </div>
-  </div>
-
+  <!-- Table comes first in source order (not just visual order) so print
+       can lay it out Table→Schedule→Stats via plain block flow + break-before
+       — a flex `order`-based reorder here made Chromium's print/PDF renderer
+       draw a stray vertical line down the right edge of every page. -->
   <div id="tab-table" class="tab-panel">
     <div id="leader-panel"></div>
     <div style="overflow-x:auto">
@@ -1452,6 +1448,13 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
       </table>
     </div>
     <div id="table-extras"></div>
+  </div>
+
+  <div id="tab-schedule" class="tab-panel active">
+    <!-- round blocks injected here -->
+    <div class="next-round-wrap" id="next-round-wrap">
+      <button class="btn-final-scores" id="btn-final-scores">Final Scores</button>
+    </div>
   </div>
 
   <div id="tab-stats" class="tab-panel">
