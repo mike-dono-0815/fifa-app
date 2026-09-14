@@ -1254,6 +1254,23 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   @page{margin:.5in;size:A4}
 
+  /* Printer-friendly palette: every component is already built on these
+     custom properties, so flipping them here turns the whole dark theme
+     light without having to touch each selector individually. Only actual
+     hardcoded (non-var) backgrounds below need their own override. */
+  :root{
+    --bg-void:#ffffff;--bg-surface:#f3f4f6;--bg-raised:#e9ebee;--bg-input:#ffffff;
+    --green-deep:#e3f7ec;--green-mid:#bdeed2;--green-bright:#0a8a44;--green-glow:transparent;
+    --blue-neon:#0077b6;--blue-glow:transparent;
+    --purple:#7c3aed;--purple-text:#7c3aed;--purple-glow:transparent;
+    --gold:#9a7300;--gold-dim:#8a6508;--gold-glow:transparent;
+    --silver:#5b6773;--bronze:#a15c2e;
+    --text-primary:#0b0d10;--text-secondary:#3a4552;--text-muted:#5b6773;
+    --win:#0a8a44;--loss:#c62828;--draw:#0077b6;
+    --border-subtle:rgba(0,0,0,.14);--border-mid:rgba(0,0,0,.26);
+  }
+  body{background:#fff}
+
   /* Show only the tournament screen content */
   #screen-setup{display:none!important}
   /* flex (not block) so the order-based Table→Schedule→Stats reorder below
@@ -1285,8 +1302,19 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   #tab-schedule{order:2;break-before:page}
   #tab-stats{order:3;break-before:page}
 
+  /* Keep the header for its title, but drop the buttons in it */
+  .tourney-header{
+    background:none!important;border-bottom:2px solid var(--border-mid);
+    padding:0 0 12px;margin-bottom:16px;
+  }
+  .tourney-header-top{margin-bottom:0}
+  .tourney-title{
+    background:none!important;-webkit-background-clip:initial!important;background-clip:initial!important;
+    -webkit-text-fill-color:var(--text-primary)!important;color:var(--text-primary);
+  }
+
   /* Hide all interactive & nav chrome */
-  .tourney-header,.tab-bar,.s-btn,#next-round-wrap,
+  .header-actions,.tab-bar,.s-btn,#next-round-wrap,
   .btn-history,.btn-new-tournament,.btn-pdf,.btn-load-save,.btn-del-save,
   .history-panel,.history-overlay,.status-dot,.nat-dropdown,
   .btn-remove,.setup-actions,.game-num-label{display:none!important}
@@ -1310,6 +1338,12 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
   /* Table */
   .standings-table thead th{position:static;backdrop-filter:none;background:var(--bg-surface)}
   .standings-table td,.standings-table th{padding:7px 10px}
+
+  /* Podium blocks + award cards use hardcoded dark gradients, not the
+     theme vars above, so they need their own light-mode override */
+  .gold-block,.silver-block,.bronze-block{background:var(--bg-raised)!important;box-shadow:none!important}
+  .award-card.gold-award,.award-card.blue-award,
+  .award-card.purple-award,.award-card.red-award{background:var(--bg-surface)!important;box-shadow:none!important}
 
   /* Stats: avoid orphaned cards */
   .stat-section{break-inside:avoid}
@@ -2477,7 +2511,20 @@ function updateGameRow(gameId){
 /* ════════════════════════════════════════
    RENDER: SCHEDULE
 ════════════════════════════════════════ */
+// Shows when the live tournament was created, e.g. "FC 2026 — September 5,
+// 2026" — matches the format generated permalink pages use for their own
+// (curated, possibly disambiguated) static title, which is left alone here.
+function updateTourneyTitle(){
+  if(loadedFinishedId)return;
+  const el=document.querySelector('.tourney-title');
+  if(!el)return;
+  const d=new Date(STATE.createdAt||Date.now());
+  const label=d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  el.textContent=`FC ${d.getFullYear()} — ${label}`;
+}
+
 function renderSchedule(){
+  updateTourneyTitle();
   const panel=document.getElementById('tab-schedule');
   // Remove all round blocks but keep the next-round wrapper
   panel.querySelectorAll('.round-block').forEach(el=>el.remove());
