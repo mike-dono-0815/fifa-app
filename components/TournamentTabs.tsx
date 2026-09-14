@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import type { Game, Player } from '@/lib/tournament/types'
 import { ScheduleTab } from './ScheduleTab'
+import { TableTab } from './TableTab'
+import { StatsTab } from './StatsTab'
 
 type Tab = 'schedule' | 'table' | 'stats'
 
@@ -41,8 +43,8 @@ export function TournamentTabs({
       {tab === 'schedule' && (
         <ScheduleTab games={games} players={players} tournamentId={tournamentId} status={status} />
       )}
-      {tab === 'table' && <div className="py-8 text-center text-text-muted">Table — coming soon</div>}
-      {tab === 'stats' && <div className="py-8 text-center text-text-muted">Stats — coming soon</div>}
+      {tab === 'table' && <TableTab players={players} games={games} finished={status === 'finished'} />}
+      {tab === 'stats' && <StatsTab players={players} games={games} />}
     </div>
   )
 }
