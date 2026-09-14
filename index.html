@@ -1324,8 +1324,13 @@ body[data-screen="tournament"] #screen-tournament{display:flex;flex-direction:co
 
   /* Game rows: tighten up */
   .game-row{padding:8px 10px;margin-bottom:4px;break-inside:avoid;grid-template-columns:1fr auto 1fr}
-  .round-block{break-inside:avoid;margin-bottom:16px}
-  .round-heading{margin-bottom:8px}
+  /* No break-inside:avoid here: a full round (e.g. 15 games) is often
+     taller than one page, and forcing the whole block to stay together
+     just pushes it entirely onto the next page, leaving a near-blank page
+     behind the "Schedule" heading. .game-row's break-inside:avoid above
+     still stops a single game being split across the page edge. */
+  .round-block{margin-bottom:16px}
+  .round-heading{margin-bottom:8px;break-after:avoid}
 
   /* Scores: hide +/- buttons, keep values */
   .score-ctrl{gap:2px}
