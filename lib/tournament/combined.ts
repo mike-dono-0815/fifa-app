@@ -1,6 +1,6 @@
 import { inArray } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { games as gamesTable, players as playersTable } from '@/lib/db/schema'
+import { games as gamesTable, players as playersTable, tournaments } from '@/lib/db/schema'
 import { toGames } from './toState'
 import type { Player, Game } from './types'
 
@@ -61,4 +61,14 @@ export async function getCombinedTournament(): Promise<{ players: Player[]; game
   })
 
   return { players: CANONICAL_PLAYERS, games }
+}
+
+export async function getCombinedDateRange(): Promise<{ start: Date; end: Date } | null> {
+  const rows = await db
+    .select({ savedAt: tournaments.savedAt, createdAt: tournaments.createdAt })
+    .from(tournaments)
+    .where(inArray(tournaments.id, REAL_TOURNAMENT_IDS))
+  if (!rows.length) return null
+  const dates = rows.map((r) => (r.savedAt ?? r.createdAt).getTime())
+  return { start: new Date(Math.min(...dates)), end: new Date(Math.max(...dates)) }
 }

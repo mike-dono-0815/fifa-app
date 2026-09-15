@@ -7,6 +7,8 @@ import { computeStandings } from '@/lib/tournament/standings'
 import { flagSrc } from '@/lib/tournament/helpers'
 import { getCombinedTournament } from '@/lib/tournament/combined'
 import type { Player, Standing } from '@/lib/tournament/types'
+import { BrandKicker } from '@/components/BrandKicker'
+import { formatDate } from '@/lib/formatDate'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,11 +42,7 @@ export default async function TournamentsOverviewPage() {
   const cards = finished.map((t) => {
     const players = toPlayers(playerRows.filter((p) => p.tournamentId === t.id))
     const games = toGames(gameRows.filter((g) => g.tournamentId === t.id))
-    const dateLabel = (t.savedAt ?? t.createdAt).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    })
+    const dateLabel = formatDate(t.savedAt ?? t.createdAt)
     return { id: t.id, dateLabel, ...buildCard(players, games) }
   })
 
@@ -54,10 +52,12 @@ export default async function TournamentsOverviewPage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-10 sm:py-16">
       <div className="text-center">
+        <div className="mb-1 flex justify-center">
+          <BrandKicker />
+        </div>
         <h1 className="headline bg-gradient-to-br from-white via-blue-neon to-green-bright bg-clip-text text-4xl text-transparent sm:text-5xl">
           All Tournaments
         </h1>
-        <p className="mt-2 text-sm uppercase tracking-widest text-text-secondary">FC 2v2 · WC Edition</p>
         <Link
           href="/"
           className="headline mt-4 inline-block rounded-fifa-sm border border-blue-neon px-4 py-2 text-sm text-blue-neon transition hover:bg-blue-neon/15"

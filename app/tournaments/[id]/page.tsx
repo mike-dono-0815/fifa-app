@@ -6,6 +6,8 @@ import { toGames, toPlayers } from '@/lib/tournament/toState'
 import { TournamentTabs } from '@/components/TournamentTabs'
 import { LiveRefresher } from '@/components/LiveRefresher'
 import { PrintButton } from '@/components/PrintButton'
+import { BrandKicker } from '@/components/BrandKicker'
+import { formatDate } from '@/lib/formatDate'
 
 export default async function TournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -23,7 +25,9 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-4 py-6 sm:py-10">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
+          <BrandKicker />
           <h1 className="headline text-2xl text-text-primary">{tournament.title || 'FC Tournament'}</h1>
+          <p className="text-sm text-text-secondary">{formatDate(tournament.savedAt ?? tournament.createdAt)}</p>
           {tournament.status === 'finished' && tournament.winnerName && (
             <p className="text-sm text-gold">🏆 {tournament.winnerName}</p>
           )}

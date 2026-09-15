@@ -1,12 +1,14 @@
-import { getCombinedTournament } from '@/lib/tournament/combined'
+import { getCombinedTournament, getCombinedDateRange } from '@/lib/tournament/combined'
 import { computeStandings } from '@/lib/tournament/standings'
 import { TournamentTabs } from '@/components/TournamentTabs'
 import { PrintButton } from '@/components/PrintButton'
+import { BrandKicker } from '@/components/BrandKicker'
+import { formatDateRange } from '@/lib/formatDate'
 
 export const dynamic = 'force-dynamic'
 
 export default async function CombinedTournamentPage() {
-  const { players, games } = await getCombinedTournament()
+  const [{ players, games }, dateRange] = await Promise.all([getCombinedTournament(), getCombinedDateRange()])
   const standings = computeStandings(players, games)
   const winnerName = players.find((p) => p.id === standings[0]?.id)?.name
 
@@ -14,7 +16,11 @@ export default async function CombinedTournamentPage() {
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-4 py-6 sm:py-10">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
+          <BrandKicker />
           <h1 className="headline text-2xl text-gold">All Tournaments Combined</h1>
+          {dateRange && (
+            <p className="text-sm text-text-secondary">{formatDateRange(dateRange.start, dateRange.end)}</p>
+          )}
           {winnerName && <p className="text-sm text-gold">🏆 {winnerName}</p>}
           <p className="mt-1 max-w-md text-xs text-text-muted">
             Every match the group has played, merged into one table — the same five people every
