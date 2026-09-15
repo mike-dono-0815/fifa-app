@@ -5,10 +5,22 @@ import { games as gamesTable, players as playersTable, tournaments } from '@/lib
 import { toGames, toPlayers } from '@/lib/tournament/toState'
 import { computeStandings } from '@/lib/tournament/standings'
 import { flagSrc } from '@/lib/tournament/helpers'
+import { getCombinedTournament } from '@/lib/tournament/combined'
+import type { Player, Standing } from '@/lib/tournament/types'
 
 export const dynamic = 'force-dynamic'
 
 const MEDALS = ['🥇', '🥈', '🥉']
+
+function buildCard(players: Player[], games: ReturnType<typeof toGames>) {
+  const standings = computeStandings(players, games)
+  const podium = standings.slice(0, 3).map((s: Standing) => ({
+    standing: s,
+    player: players.find((p) => p.id === s.id)!,
+  }))
+  const gamesPlayed = games.filter((g) => g.confirmed).length
+  return { players, podium, gamesPlayed }
+}
 
 export default async function TournamentsOverviewPage() {
   const finished = await db
@@ -28,19 +40,16 @@ export default async function TournamentsOverviewPage() {
   const cards = finished.map((t) => {
     const players = toPlayers(playerRows.filter((p) => p.tournamentId === t.id))
     const games = toGames(gameRows.filter((g) => g.tournamentId === t.id))
-    const standings = computeStandings(players, games)
-    const podium = standings.slice(0, 3).map((s) => ({
-      standing: s,
-      player: players.find((p) => p.id === s.id)!,
-    }))
     const dateLabel = (t.savedAt ?? t.createdAt).toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
       year: 'numeric',
     })
-    const gamesPlayed = games.filter((g) => g.confirmed).length
-    return { id: t.id, dateLabel, players, podium, gamesPlayed }
+    return { id: t.id, dateLabel, ...buildCard(players, games) }
   })
+
+  const combined = await getCombinedTournament()
+  const combinedCard = combined.games.length ? buildCard(combined.players, combined.games) : null
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-10 sm:py-16">
@@ -57,10 +66,60 @@ export default async function TournamentsOverviewPage() {
         </Link>
       </div>
 
-      {cards.length === 0 ? (
+      {cards.length === 0 && !combinedCard ? (
         <p className="text-center text-text-secondary">No finished tournaments yet.</p>
       ) : (
         <div className="flex flex-col gap-3.5">
+          {combinedCard && (
+            <Link
+              href="/tournaments/all"
+              className="block rounded-fifa border border-gold/40 bg-gradient-to-br from-[#14120a] to-surface px-5 py-4.5 transition hover:border-gold hover:shadow-[0_0_22px_rgba(255,215,0,.18)]"
+            >
+              <div className="mb-3.5 flex flex-wrap items-baseline justify-between gap-3">
+                <span className="headline text-2xl text-gold">All Tournaments Combined</span>
+                <span className="text-sm text-text-secondary">
+                  {combinedCard.players.length} players · {combinedCard.gamesPlayed} games · every match combined
+                </span>
+              </div>
+              <div className="mb-3.5 flex gap-1.5">
+                {combinedCard.players.map((p) => (
+                  <img
+                    key={p.id}
+                    src={flagSrc(p.countryCode)}
+                    alt={p.name}
+                    title={p.name}
+                    className="h-[18px] w-[26px] rounded-sm object-cover opacity-90"
+                  />
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                {combinedCard.podium.map(({ standing, player }, i) => (
+                  <div
+                    key={player.id}
+                    className={`flex items-center gap-1.5 rounded-fifa-sm border border-border-subtle bg-raised py-1.5 pr-2.5 pl-2 ${
+                      i === 0 ? 'border-gold/35 shadow-[inset_3px_0_12px_rgba(255,215,0,.12)]' : ''
+                    }`}
+                  >
+                    <span className="text-sm">{MEDALS[i]}</span>
+                    <img src={flagSrc(player.countryCode)} alt="" className="h-[15px] w-[22px] rounded-sm object-cover" />
+                    <span
+                      className={`headline text-base ${
+                        i === 0 ? 'text-gold' : i === 1 ? 'text-silver' : 'text-bronze'
+                      }`}
+                    >
+                      {player.name}
+                    </span>
+                    <span className="headline text-sm text-text-secondary">{standing.pts} pts</span>
+                  </div>
+                ))}
+              </div>
+            </Link>
+          )}
+          {cards.length > 0 && (
+            <p className="mt-1 px-1 text-xs font-semibold uppercase tracking-widest text-text-secondary">
+              Individual tournaments
+            </p>
+          )}
           {cards.map((c) => (
             <Link
               key={c.id}
