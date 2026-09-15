@@ -1,14 +1,15 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { ALL_NATIONS, PINNED_NATIONS, TOP_NATIONS, type Country } from '@/lib/countries'
 import { flagSrc } from '@/lib/tournament/helpers'
 import { createTournament, type NewPlayerInput } from '@/lib/tournament/actions'
+import { NationalitySelect } from './NationalitySelect'
 
 type DraftPlayer = { id: string; name: string; countryCode: string; countryName: string }
 
 const MIN_PLAYERS = 4
 const MAX_PLAYERS = 8
+const DEFAULT_PLAYERS = 5
 
 function comb(n: number, k: number): number {
   if (k > n) return 0
@@ -21,18 +22,9 @@ function makeDraftId() {
   return Math.random().toString(36).slice(2, 10)
 }
 
-function restOfTop(): Country[] {
-  return TOP_NATIONS.filter((t) => !PINNED_NATIONS.some((p) => p.code === t.code))
-}
-function restOfAll(): Country[] {
-  return ALL_NATIONS.filter(
-    (a) => !TOP_NATIONS.some((t) => t.code === a.code) && !PINNED_NATIONS.some((p) => p.code === a.code)
-  )
-}
-
 export function SetupForm() {
   const [draftPlayers, setDraftPlayers] = useState<DraftPlayer[]>(() =>
-    Array.from({ length: MIN_PLAYERS }, () => ({ id: makeDraftId(), name: '', countryCode: '', countryName: '' }))
+    Array.from({ length: DEFAULT_PLAYERS }, () => ({ id: makeDraftId(), name: '', countryCode: '', countryName: '' }))
   )
   const [errors, setErrors] = useState<Record<string, { name?: boolean; country?: boolean }>>({})
   const [isPending, startTransition] = useTransition()
@@ -59,11 +51,8 @@ export function SetupForm() {
     setDraftPlayers((ps) => ps.map((p) => (p.id === id ? { ...p, name: cleaned } : p)))
   }
 
-  function updateCountry(id: string, code: string) {
-    const country = ALL_NATIONS.find((c) => c.code === code) || TOP_NATIONS.find((c) => c.code === code)
-    setDraftPlayers((ps) =>
-      ps.map((p) => (p.id === id ? { ...p, countryCode: code, countryName: country?.name ?? '' } : p))
-    )
+  function updateCountry(id: string, code: string, name: string) {
+    setDraftPlayers((ps) => ps.map((p) => (p.id === id ? { ...p, countryCode: code, countryName: name } : p)))
   }
 
   function handleGenerate() {
@@ -116,30 +105,11 @@ export function SetupForm() {
                 errors[p.id]?.name ? 'border-loss' : 'border-transparent'
               }`}
             />
-            <select
+            <NationalitySelect
               value={p.countryCode}
-              onChange={(e) => updateCountry(p.id, e.target.value)}
-              className={`w-36 flex-shrink-0 rounded-fifa-sm bg-input px-2 py-1.5 text-sm text-text-primary outline-none border ${
-                errors[p.id]?.country ? 'border-loss' : 'border-transparent'
-              }`}
-            >
-              <option value="">Nationality…</option>
-              <optgroup label="Pinned">
-                {PINNED_NATIONS.map((c) => (
-                  <option key={c.code} value={c.code}>{c.name}</option>
-                ))}
-              </optgroup>
-              <optgroup label="Top nations">
-                {restOfTop().map((c) => (
-                  <option key={c.code} value={c.code}>{c.name}</option>
-                ))}
-              </optgroup>
-              <optgroup label="All nations">
-                {restOfAll().map((c) => (
-                  <option key={c.code} value={c.code}>{c.name}</option>
-                ))}
-              </optgroup>
-            </select>
+              onChange={(code, name) => updateCountry(p.id, code, name)}
+              error={errors[p.id]?.country}
+            />
             <button
               type="button"
               onClick={() => removePlayer(p.id)}
