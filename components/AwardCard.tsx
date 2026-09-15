@@ -4,10 +4,10 @@ import { flagSrc, playerById } from '@/lib/tournament/helpers'
 type AwardStyle = 'gold' | 'blue' | 'red' | 'purple' | 'plain'
 
 const styleClasses: Record<AwardStyle, string> = {
-  gold: 'border-gold/40 bg-gold/10',
-  blue: 'border-blue-neon/40 bg-blue-neon/10',
-  red: 'border-loss/40 bg-loss/10',
-  purple: 'border-purple/40 bg-purple/10',
+  gold: 'border-gold-dim bg-[linear-gradient(135deg,#1a1500,#2a2200)] shadow-[0_0_16px_rgba(255,215,0,.2)]',
+  blue: 'border-[rgba(0,180,255,.3)] bg-[linear-gradient(135deg,#0a0d1a,#141a2a)] shadow-[0_0_12px_rgba(0,180,255,.15)]',
+  purple: 'border-[rgba(168,85,247,.3)] bg-[linear-gradient(135deg,#110a1a,#1a1028)] shadow-[0_0_12px_rgba(168,85,247,.2)]',
+  red: 'border-[rgba(255,77,77,.3)] bg-[linear-gradient(135deg,#1a0a0a,#2a1010)]',
   plain: 'border-border-subtle bg-surface',
 }
 
@@ -28,30 +28,34 @@ function AwardCard({
 }) {
   if (!player) {
     return (
-      <div className="print-avoid-break flex flex-col items-center gap-1 rounded-fifa border border-border-subtle bg-surface p-3 text-center opacity-40">
-        <div className="text-2xl">{icon}</div>
-        <div className="text-xs font-semibold uppercase tracking-wide text-text-secondary">{title}</div>
-        <div className="text-xs text-text-muted">Not enough data yet</div>
+      <div className="print-avoid-break rounded-fifa border border-border-subtle bg-surface p-4 opacity-40 transition">
+        <div className="mb-2 text-[1.6rem] leading-none">{icon}</div>
+        <div className="font-headline mb-2 text-sm font-extrabold uppercase tracking-wide text-text-secondary">
+          {title}
+        </div>
+        <div className="text-[0.85rem] leading-snug text-text-secondary">Not enough data yet</div>
       </div>
     )
   }
   const p = playerById(players, player.id)
   return (
-    <div className={`print-avoid-break flex flex-col items-center gap-1 rounded-fifa border p-3 text-center ${styleClasses[style]}`}>
-      <div className="text-2xl">{icon}</div>
-      <div className="text-xs font-semibold uppercase tracking-wide text-text-secondary">{title}</div>
-      <span className="flex items-center gap-1.5 text-sm font-semibold text-text-primary">
+    <div className={`print-avoid-break rounded-fifa border p-4 transition ${styleClasses[style]}`}>
+      <div className="mb-2 text-[1.6rem] leading-none">{icon}</div>
+      <div className="font-headline mb-2 text-sm font-extrabold uppercase tracking-wide text-text-secondary">
+        {title}
+      </div>
+      <div className="mb-1.5 flex items-center gap-2">
         <img
           src={flagSrc(p?.countryCode)}
           alt=""
-          className="h-3 w-4 rounded-sm object-cover"
+          className="h-[19px] w-7 rounded-sm object-cover"
           onError={(e) => {
             e.currentTarget.style.opacity = '0'
           }}
         />
-        {p?.name ?? '?'}
-      </span>
-      <div className="text-xs text-text-muted">{desc}</div>
+        <span className="font-headline text-xl font-extrabold uppercase text-text-primary">{p?.name ?? '?'}</span>
+      </div>
+      <div className="text-[0.85rem] leading-snug text-text-secondary">{desc}</div>
     </div>
   )
 }
@@ -68,7 +72,7 @@ export function AwardsGrid({
   players: Player[]
 }) {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
       <AwardCard icon="⚽" title="Top Scorer" player={awards.topScorer} players={players} desc={`${awards.topScorer?.gf ?? 0} goals`} style="gold" />
       <AwardCard
         icon="🧤"
