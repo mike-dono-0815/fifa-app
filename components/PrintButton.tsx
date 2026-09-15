@@ -5,7 +5,7 @@ export function PrintButton() {
     <button
       type="button"
       onClick={() => window.print()}
-      className="print:hidden headline rounded-fifa-sm border border-border-mid px-3 py-1.5 text-xs text-text-secondary transition hover:border-blue-neon hover:text-blue-neon"
+      className="print:hidden headline inline-flex items-center gap-1.5 rounded-fifa-sm border border-blue-neon bg-raised px-3.5 py-1.5 text-xs text-blue-neon transition hover:bg-blue-neon/15"
     >
       📄 PDF
     </button>

@@ -23,8 +23,11 @@ export default async function CombinedTournamentPage() {
         </div>
         <div className="flex items-center gap-3">
           <PrintButton />
-          <a href="/tournaments" className="print:hidden text-sm text-blue-neon hover:underline">
-            All Tournaments →
+          <a
+            href="/tournaments"
+            className="print:hidden headline inline-flex items-center gap-1.5 rounded-fifa-sm border border-blue-neon px-3.5 py-1.5 text-xs text-blue-neon transition hover:bg-blue-neon/15"
+          >
+            📋 All Tournaments →
           </a>
         </div>
       </div>
